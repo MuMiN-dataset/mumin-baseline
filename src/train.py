@@ -17,14 +17,12 @@ def train(num_epochs: int, hidden_dim: int):
         hidden_dim (int):
             The dimension of the hidden layer.
     '''
-    breakpoint()
-
     # Load dataset
     graph = load_mumin_graph()#.to('cuda')
 
     # Store node features
     feats = {node_type: graph.nodes[node_type].data['feat']
-             for node_type in graph.ntypes()}
+             for node_type in graph.ntypes}
 
     # Store labels and masks
     labels = graph.nodes['tweet'].data['label']
@@ -32,9 +30,10 @@ def train(num_epochs: int, hidden_dim: int):
     val_mask = graph.nodes['tweet'].data['val_mask']
 
     # Initialise dictionary with feature dimensions
-    dims = dict(user=6, tweet=3, reply=3, image=1, article=1, hashtag=1)
+    dims = dict(claim=768, user=6, tweet=3, reply=3, image=1, article=1,
+            hashtag=1, place=2)
     feat_dict = {rel: (dims[rel[0]], hidden_dim, dims[rel[2]])
-                 for rel in graph.etypes()}
+                 for rel in graph.canonical_etypes}
 
     # Initialise model
     model = HeteroGraphSAGE(feat_dict)#.to('cuda')
