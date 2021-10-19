@@ -14,12 +14,12 @@ class HeteroGraphSAGE(nn.Module):
         self.feat_dict = feat_dict
 
         self.conv1 = dglnn.HeteroGraphConv(
-            {rel: dglnn.GraphConv(*feats[:-2])
+            {rel[1]: dglnn.GraphConv(*feats[:2])
              for rel, feats in feat_dict.items()},
             aggregate='sum')
 
         self.conv2 = dglnn.HeteroGraphConv(
-            {rel: dglnn.GraphConv(*feats[1:])
+            {rel[1]: dglnn.GraphConv(*feats[1:])
              for rel, feats in feat_dict.items()},
             aggregate='sum')
 
