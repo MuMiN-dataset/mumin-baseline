@@ -20,7 +20,7 @@ def train(num_epochs: int, hidden_dim: int):
     breakpoint()
 
     # Load dataset
-    graph = load_mumin_graph().to('cuda')
+    graph = load_mumin_graph()#.to('cuda')
 
     # Store node features
     feats = {node_type: graph.nodes[node_type].data['feat']
@@ -32,12 +32,12 @@ def train(num_epochs: int, hidden_dim: int):
     val_mask = graph.nodes['tweet'].data['val_mask']
 
     # Initialise dictionary with feature dimensions
-    dims = dict(user=1, tweet=1, reply=1, image=1, article=1, hashtag=1)
+    dims = dict(user=6, tweet=3, reply=3, image=1, article=1, hashtag=1)
     feat_dict = {rel: (dims[rel[0]], hidden_dim, dims[rel[2]])
                  for rel in graph.etypes()}
 
     # Initialise model
-    model = HeteroGraphSAGE(feat_dict).to('cuda')
+    model = HeteroGraphSAGE(feat_dict)#.to('cuda')
     model.train()
 
     # Initialise optimiser
