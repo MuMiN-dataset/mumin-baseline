@@ -1,15 +1,16 @@
 '''Training scripts'''
 
 from data import load_mumin_graph
-from graphsage import HeteroGraphSAGE
+from model import HeteroGraphSAGE
 
+import torch
 import torch.nn.functional as F
 import torch.optim as optim
 import torchmetrics as tm
 
 
 def train(num_epochs: int, hidden_dim: int):
-    '''Train a heterogeneous GraphSAGE model on the MuMiN dataset.
+    '''Train a heterogeneous GraphConv model on the MuMiN dataset.
 
     Args:
         num_epochs (int):
@@ -21,7 +22,7 @@ def train(num_epochs: int, hidden_dim: int):
     graph = load_mumin_graph()#.to('cuda')
 
     # Store node features
-    feats = {node_type: graph.nodes[node_type].data['feat']
+    feats = {node_type: graph.nodes[node_type].data['feat'].float()
              for node_type in graph.ntypes}
 
     # Store labels and masks
@@ -29,9 +30,12 @@ def train(num_epochs: int, hidden_dim: int):
     train_mask = graph.nodes['tweet'].data['train_mask']
     val_mask = graph.nodes['tweet'].data['val_mask']
 
+    for ntype in graph.ntypes:
+        print(ntype, graph.nodes[ntype].data['feat'].shape)
+
     # Initialise dictionary with feature dimensions
     dims = dict(claim=768, user=6, tweet=3, reply=3, image=1, article=1,
-            hashtag=1, place=2)
+                hashtag=1, place=2)
     feat_dict = {rel: (dims[rel[0]], hidden_dim, dims[rel[2]])
                  for rel in graph.canonical_etypes}
 
@@ -43,18 +47,19 @@ def train(num_epochs: int, hidden_dim: int):
     opt = optim.Adam(model.parameters())
 
     # Initialise scorer
-    scorer = tm.F1(num_classes=2, threshold=0.5, average='macro')
+    scorer = tm.F1(num_classes=2, average='macro')
 
-    for epoch in range(num_epochs):
+    for _ in range(num_epochs):
 
         # Forward propagation
-        logits = model(graph, feats)['tweet']
+        logits = model(graph, feats)
+        logits = logits['tweet']
 
         # Compute loss
         loss = F.cross_entropy(logits[train_mask], labels[train_mask])
 
         # Compute validation score
-        score = scorer(logits[train_mask].argmax(dim=-1), labels[train_mask])
+        score = scorer(logits[val_mask].argmax(dim=-1), labels[val_mask])
 
         # Backward propagation
         opt.zero_grad()
