@@ -45,7 +45,7 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
     model.train()
 
     # Initialise optimiser
-    opt = optim.Adam(model.parameters(), lr=3e-4)
+    opt = optim.Adam(model.parameters(), lr=1e-4)
 
     # Initialise scorer
     scorer = tm.F1(num_classes=2, average='none')
