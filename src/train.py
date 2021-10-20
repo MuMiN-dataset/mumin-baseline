@@ -30,9 +30,6 @@ def train(num_epochs: int, hidden_dim: int):
     train_mask = graph.nodes['tweet'].data['train_mask']
     val_mask = graph.nodes['tweet'].data['val_mask']
 
-    for ntype in graph.ntypes:
-        print(ntype, graph.nodes[ntype].data['feat'].shape)
-
     # Initialise dictionary with feature dimensions
     dims = dict(claim=768, user=6, tweet=3, reply=3, image=1, article=1,
                 hashtag=1, place=2)
@@ -44,22 +41,27 @@ def train(num_epochs: int, hidden_dim: int):
     model.train()
 
     # Initialise optimiser
-    opt = optim.Adam(model.parameters())
+    opt = optim.Adam(model.parameters(), lr=3e-4)
 
     # Initialise scorer
-    scorer = tm.F1(num_classes=2, average='macro')
+    scorer = tm.F1(num_classes=2, average='none')
 
-    for _ in range(num_epochs):
+    for epoch in range(num_epochs):
 
         # Forward propagation
         logits = model(graph, feats)
-        logits = logits['tweet']
+        logits = logits['tweet'].squeeze(1)
 
         # Compute loss
-        loss = F.cross_entropy(logits[train_mask], labels[train_mask])
+        loss = F.binary_cross_entropy_with_logits(logits[train_mask],
+                                                  labels[train_mask].float(),
+                                                  pos_weight=torch.tensor(20.))
 
         # Compute validation score
-        score = scorer(logits[val_mask].argmax(dim=-1), labels[val_mask])
+        with torch.no_grad():
+            scores = scorer(logits[val_mask].ge(0), labels[val_mask])
+            misinformation_f1 = scores[0]
+            factual_f1 = scores[1]
 
         # Backward propagation
         opt.zero_grad()
@@ -67,12 +69,15 @@ def train(num_epochs: int, hidden_dim: int):
         opt.step()
 
         # Report loss and score
-        print('Loss:', loss)
-        print('Score:', score)
+        print(f'Epoch {epoch}')
+        print('> Loss:', float(loss))
+        print('> Misinformation F1:', float(misinformation_f1))
+        print('> Factual F1:', float(factual_f1))
+        print()
 
         # Save model
         # TODO
 
 
 if __name__ == '__main__':
-    train(num_epochs=100, hidden_dim=10)
+    train(num_epochs=1000, hidden_dim=100)
