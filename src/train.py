@@ -65,8 +65,7 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
         with torch.no_grad():
             val_loss = F.binary_cross_entropy_with_logits(
                 logits[val_mask],
-                labels[val_mask].float(),
-                pos_weight=torch.tensor(20.)
+                labels[val_mask].float()
             )
             scores = scorer(logits[val_mask].ge(0), labels[val_mask])
             misinformation_f1 = scores[0]
