@@ -9,7 +9,7 @@ import torch.optim as optim
 import torchmetrics as tm
 
 
-def train(num_epochs: int, hidden_dim: int):
+def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
     '''Train a heterogeneous GraphConv model on the MuMiN dataset.
 
     Args:
@@ -17,6 +17,10 @@ def train(num_epochs: int, hidden_dim: int):
             The number of epochs to train for.
         hidden_dim (int):
             The dimension of the hidden layer.
+        task (str, optional):
+            The task to consider, which can be either 'tweet' or 'claim',
+            corresponding to doing thread-level or claim-level node
+            classification.
     '''
     # Load dataset
     graph = load_mumin_graph()#.to('cuda')
@@ -26,9 +30,9 @@ def train(num_epochs: int, hidden_dim: int):
              for node_type in graph.ntypes}
 
     # Store labels and masks
-    labels = graph.nodes['tweet'].data['label']
-    train_mask = graph.nodes['tweet'].data['train_mask']
-    val_mask = graph.nodes['tweet'].data['val_mask']
+    labels = graph.nodes[task].data['label']
+    train_mask = graph.nodes[task].data['train_mask']
+    val_mask = graph.nodes[task].data['val_mask']
 
     # Initialise dictionary with feature dimensions
     dims = dict(claim=768, user=6, tweet=3, reply=3, image=1, article=1,
@@ -50,7 +54,7 @@ def train(num_epochs: int, hidden_dim: int):
 
         # Forward propagation
         logits = model(graph, feats)
-        logits = logits['tweet'].squeeze(1)
+        logits = logits[task].squeeze(1)
 
         # Compute loss
         loss = F.binary_cross_entropy_with_logits(logits[train_mask],
@@ -59,6 +63,11 @@ def train(num_epochs: int, hidden_dim: int):
 
         # Compute validation score
         with torch.no_grad():
+            val_loss = F.binary_cross_entropy_with_logits(
+                logits[val_mask],
+                labels[val_mask].float(),
+                pos_weight=torch.tensor(20.)
+            )
             scores = scorer(logits[val_mask].ge(0), labels[val_mask])
             misinformation_f1 = scores[0]
             factual_f1 = scores[1]
@@ -70,9 +79,10 @@ def train(num_epochs: int, hidden_dim: int):
 
         # Report loss and score
         print(f'Epoch {epoch}')
-        print('> Loss:', float(loss))
-        print('> Misinformation F1:', float(misinformation_f1))
-        print('> Factual F1:', float(factual_f1))
+        print('> Train loss:', float(loss))
+        print('> Val loss:', float(val_loss))
+        print('> Val misinformation F1:', float(misinformation_f1))
+        print('> Val factual F1:', float(factual_f1))
         print()
 
         # Save model
@@ -80,4 +90,4 @@ def train(num_epochs: int, hidden_dim: int):
 
 
 if __name__ == '__main__':
-    train(num_epochs=1000, hidden_dim=100)
+    train(num_epochs=1000, hidden_dim=100, task='claim')
