@@ -17,8 +17,8 @@ def load_mumin_graph(size: str = 'small') -> dgl.DGLHeteroGraph:
             'large'.
     '''
     dataset = MuminDataset(os.getenv('TWITTER_API_KEY'),
-                           size=size,
-                           verbose=True)
+                           size=size, include_articles=False,
+                           include_replies=False)
     dataset.compile()
-    #dataset.add_embeddings()
+    #dataset.add_embeddings(nodes_to_embed=['user'])
     return dataset.to_dgl()
