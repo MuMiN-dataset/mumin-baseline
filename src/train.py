@@ -35,8 +35,8 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
     val_mask = graph.nodes[task].data['val_mask']
 
     # Initialise dictionary with feature dimensions
-    dims = dict(claim=768, user=6, tweet=3, reply=3, image=1, article=1,
-                hashtag=1, place=2)
+    dims = dict(claim=870, user=774, tweet=811, reply=825, image=1, article=1536,
+                hashtag=1)
     feat_dict = {rel: (dims[rel[0]], hidden_dim, dims[rel[2]])
                  for rel in graph.canonical_etypes}
 
@@ -45,7 +45,7 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
     model.train()
 
     # Initialise optimiser
-    opt = optim.Adam(model.parameters(), lr=1e-4)
+    opt = optim.Adam(model.parameters(), lr=2e-5)
 
     # Initialise scorer
     scorer = tm.F1(num_classes=2, average='none')
