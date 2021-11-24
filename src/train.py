@@ -11,7 +11,10 @@ import torchmetrics as tm
 from dgl.data.utils import save_graphs, load_graphs
 
 
-def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
+def train(num_epochs: int,
+          hidden_dim: int,
+          size: str = 'small',
+          task: str = 'claim'):
     '''Train a heterogeneous GraphConv model on the MuMiN dataset.
 
     Args:
@@ -19,13 +22,18 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
             The number of epochs to train for.
         hidden_dim (int):
             The dimension of the hidden layer.
+        size (str, optional):
+            The size of the dataset to use. Defaults to 'small'.
         task (str, optional):
             The task to consider, which can be either 'tweet' or 'claim',
             corresponding to doing thread-level or claim-level node
-            classification.
+            classification. Defaults to 'claim'.
     '''
+    # Set up PyTorch device
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
     # Set up graph path
-    graph_path = Path('data.bin')
+    graph_path = Path(f'dgl-graph-{size}.bin')
 
     if graph_path.exists():
         # Load the graph
@@ -33,7 +41,7 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
 
     else:
         # Load dataset
-        graph = load_mumin_graph()#.to('cuda')
+        graph = load_mumin_graph(size=size).to(device)
 
         # Save graph to disk
         save_graphs(str(graph_path), [graph])
@@ -54,7 +62,8 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
                  for rel in graph.canonical_etypes}
 
     # Initialise model
-    model = HeteroGraphSAGE(feat_dict)#.to('cuda')
+    model = HeteroGraphSAGE(feat_dict)
+    model.to(device)
     model.train()
 
     # Initialise optimiser
