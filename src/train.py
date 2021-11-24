@@ -3,10 +3,12 @@
 from data import load_mumin_graph
 from model import HeteroGraphSAGE
 
+from pathlib import Path
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
 import torchmetrics as tm
+from dgl.data.utils import save_graphs, load_graphs
 
 
 def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
@@ -22,8 +24,19 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
             corresponding to doing thread-level or claim-level node
             classification.
     '''
-    # Load dataset
-    graph = load_mumin_graph()#.to('cuda')
+    # Set up graph path
+    graph_path = Path('data.bin')
+
+    if graph_path.exists():
+        # Load the graph
+        graph = load_graphs(str(graph_path))[0][0]
+
+    else:
+        # Load dataset
+        graph = load_mumin_graph()#.to('cuda')
+
+        # Save graph to disk
+        save_graphs(str(graph_path), [graph])
 
     # Store node features
     feats = {node_type: graph.nodes[node_type].data['feat'].float()
