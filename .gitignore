@@ -137,5 +137,5 @@ dmypy.json
 **/.DS_Store
 
 # Data files
-./mumin-*.zip
-./dgl_graph-*.bin
+mumin-*.zip
+dgl-graph-*.bin
