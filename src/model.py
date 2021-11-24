@@ -20,8 +20,8 @@ class HeteroGraphSAGE(nn.Module):
 
         self.conv1 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=(feats[0], feats[2]),
-                              out_feats=feats[1],
-                              activation=F.relu)
+                           out_feats=feats[1],
+                           activation=F.relu)
              for rel, feats in feat_dict.items()},
             aggregate='sum')
 
