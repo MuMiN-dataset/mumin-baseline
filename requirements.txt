@@ -22,7 +22,7 @@ joblib==1.1.0
 lazy-object-proxy==1.6.0
 lxml==4.6.3
 mccabe==0.6.1
--e git+ssh://git@github.com/CLARITI-REPHRAIN/mumin-build.git@ccaab35ece7630ba62754a0ef1a2f27677027476#egg=mumin
+-e git+ssh://git@github.com/CLARITI-REPHRAIN/mumin-build.git@5dea2891cc0f528518fdffaf9a28e37d1e86afdf#egg=mumin
 networkx==2.6.3
 newspaper3k==0.2.8
 nltk==3.6.5
