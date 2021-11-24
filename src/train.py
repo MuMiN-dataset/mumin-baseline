@@ -48,8 +48,8 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
     val_mask = graph.nodes[task].data['val_mask'].long()
 
     # Initialise dictionary with feature dimensions
-    dims = dict(claim=870, user=774, tweet=811, reply=825, image=1, article=1536,
-                hashtag=1)
+    dims = dict(claim=870, user=774, tweet=811, reply=824, image=768,
+                article=1536, hashtag=1)
     feat_dict = {rel: (dims[rel[0]], hidden_dim, dims[rel[2]])
                  for rel in graph.canonical_etypes}
 
