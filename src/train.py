@@ -44,8 +44,8 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
 
     # Store labels and masks
     labels = graph.nodes[task].data['label']
-    train_mask = graph.nodes[task].data['train_mask']
-    val_mask = graph.nodes[task].data['val_mask']
+    train_mask = graph.nodes[task].data['train_mask'].long()
+    val_mask = graph.nodes[task].data['val_mask'].long()
 
     # Initialise dictionary with feature dimensions
     dims = dict(claim=870, user=774, tweet=811, reply=825, image=1, article=1536,
