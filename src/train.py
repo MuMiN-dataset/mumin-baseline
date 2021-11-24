@@ -74,16 +74,24 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
                                                   labels[train_mask].float(),
                                                   pos_weight=torch.tensor(20.))
 
-        # Compute validation score
         with torch.no_grad():
+
+            # Compute validation loss
             val_loss = F.binary_cross_entropy_with_logits(
                 logits[val_mask],
                 labels[val_mask].float(),
                 pos_weight=torch.tensor(20.)
             )
-            scores = scorer(logits[val_mask].ge(0), labels[val_mask])
-            misinformation_f1 = scores[0]
-            factual_f1 = scores[1]
+
+            # Compute training metrics
+            train_scores = scorer(logits[train_mask].ge(0), labels[train_mask])
+            train_misinformation_f1 = train_scores[0]
+            train_factual_f1 = train_scores[1]
+
+            # Compute validation metrics
+            val_scores = scorer(logits[val_mask].ge(0), labels[val_mask])
+            val_misinformation_f1 = val_scores[0]
+            val_factual_f1 = val_scores[1]
 
         # Backward propagation
         opt.zero_grad()
@@ -92,10 +100,12 @@ def train(num_epochs: int, hidden_dim: int, task: str = 'tweet'):
 
         # Report loss and score
         print(f'Epoch {epoch}')
-        print('> Train loss:', float(loss))
-        print('> Val loss:', float(val_loss))
-        print('> Val misinformation F1:', float(misinformation_f1))
-        print('> Val factual F1:', float(factual_f1))
+        print('> Train loss:', loss.item())
+        print('> Train misinformation F1:', train_misinformation_f1.item())
+        print('> Train factual F1:', train_factual_f1.item())
+        print('> Val loss:', val_loss.item())
+        print('> Val misinformation F1:', val_misinformation_f1.item())
+        print('> Val factual F1:', val_factual_f1.item())
         print()
 
         # Save model
