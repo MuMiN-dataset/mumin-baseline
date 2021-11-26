@@ -12,7 +12,6 @@ import torchmetrics as tm
 from dgl.data.utils import save_graphs, load_graphs
 import dgl
 import logging
-from termcolor import colored
 import json
 from typing import Tuple
 import datetime as dt
@@ -201,10 +200,4 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    # Set up logging
-    fmt = (colored('%(asctime)s [%(levelname)s] <%(name)s>\n↳ ', 'green') +
-           colored('%(message)s', 'yellow'))
-    logging.basicConfig(level=logging.INFO, format=fmt)
-
-    # Train the model
     train(num_epochs=10_000, hidden_dim=100, task='claim')
