@@ -82,7 +82,7 @@ def train(num_epochs: int,
     model.train()
 
     # Set up path to state dict, and load model weights if they exist
-    model_path = Path(f'{task}-model-{size}-{hidden_dim}.pt')
+    model_path = Path('models') / f'{task}-model-{size}-{hidden_dim}.pt'
     if model_path.exists():
         model.load_state_dict(torch.load(str(model_path)))
 
@@ -159,5 +159,4 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    # Train model
-    train(num_epochs=1000, hidden_dim=500, task='claim')
+    train(num_epochs=10_000, hidden_dim=100, task='claim')
