@@ -13,19 +13,20 @@ from dgl.data.utils import save_graphs, load_graphs
 import dgl
 import logging
 from termcolor import colored
-
-
-# Set up logging
-fmt = (colored('%(asctime)s [%(levelname)s] <%(name)s>\n↳ ', 'green') +
-       colored('%(message)s', 'yellow'))
-logging.basicConfig(level=logging.INFO, format=fmt)
-logger = logging.getLogger(__name__)
+import json
+from typing import Tuple
+import datetime as dt
 
 
 def train(num_epochs: int,
           hidden_dim: int,
           size: str = 'small',
-          task: str = 'claim'):
+          task: str = 'claim',
+          initial_lr: float = 5e-5,
+          lr_factor: float = 0.8,
+          lr_patience: int = 10,
+          betas: Tuple[float, float] = (0.8, 0.998),
+          pos_weight: float = 20.):
     '''Train a heterogeneous GraphConv model on the MuMiN dataset.
 
     Args:
@@ -39,10 +40,31 @@ def train(num_epochs: int,
             The task to consider, which can be either 'tweet' or 'claim',
             corresponding to doing thread-level or claim-level node
             classification. Defaults to 'claim'.
+        initial_lr (float, optional):
+            The initial learning rate. Defaults to 5e-5.
+        lr_factor (float, optional):
+            The factor by which to reduce the learning rate. Defaults to 0.8.
+        lr_patience (int, optional):
+            The number of epochs to wait before reducing the learning rate.
+            Defaults to 10.
+        betas (Tuple[float, float], optional):
+            The coefficients for the Adam optimizer. Defaults to (0.8, 0.998).
+        pos_weight (float, optional):
+            The weight to give to the positive examples. Defaults to 20.
     '''
     # Set random seeds
     torch.manual_seed(4242)
     dgl.seed(4242)
+
+    # Set config
+    config = dict(hidden_dim=hidden_dim,
+                  size=size,
+                  task=task,
+                  initial_lr=initial_lr,
+                  lr_factor=lr_factor,
+                  lr_patience=lr_patience,
+                  betas=betas,
+                  pos_weight=pos_weight)
 
     # Set up PyTorch device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -81,21 +103,30 @@ def train(num_epochs: int,
     model.to(device)
     model.train()
 
-    # Set up path to state dict, and load model weights if they exist
-    model_dir = Path('models')
+    # Set up pos_weight
+    pos_weight_tensor = torch.tensor(pos_weight).to(device)
+
+    # Set up path to state dict
+    datetime = dt.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
+    Path('models').mkdir(exist_ok=True)
+    model_dir = Path('models') / f'{datetime}-{task}-model-{size}'
     model_dir.mkdir(exist_ok=True)
-    model_path = model_dir / f'{task}-model-{size}-{hidden_dim}.pt'
-    if model_path.exists():
-        model.load_state_dict(torch.load(str(model_path)))
+    model_path = model_dir / 'model.pt'
+    config_path = model_dir / 'config.json'
 
     # Initialise optimiser
-    opt = optim.AdamW(model.parameters(), lr=5e-5, betas=(0.8, 0.998))
+    opt = optim.AdamW(model.parameters(), lr=initial_lr, betas=betas)
 
     # Initialise learning rate scheduler
-    scheduler = ReduceLROnPlateau(optimizer=opt, factor=0.8, patience=10)
+    scheduler = ReduceLROnPlateau(optimizer=opt,
+                                  factor=lr_factor,
+                                  patience=lr_patience)
 
     # Initialise scorer
     scorer = tm.F1(num_classes=2, average='none')
+
+    # Initialise best validation loss
+    best_val_loss = float('inf')
 
     for epoch in range(num_epochs):
 
@@ -109,7 +140,7 @@ def train(num_epochs: int,
         # Compute loss
         loss = F.binary_cross_entropy_with_logits(logits[train_mask],
                                                   labels[train_mask].float(),
-                                                  pos_weight=torch.tensor(20.))
+                                                  pos_weight=pos_weight_tensor)
 
         with torch.no_grad():
 
@@ -117,16 +148,16 @@ def train(num_epochs: int,
             val_loss = F.binary_cross_entropy_with_logits(
                 logits[val_mask],
                 labels[val_mask].float(),
-                pos_weight=torch.tensor(20.)
+                pos_weight=pos_weight_tensor
             )
 
             # Compute training metrics
-            train_scores = scorer(logits[train_mask].ge(0), labels)
+            train_scores = scorer(logits[train_mask].ge(0), labels[train_mask])
             train_misinformation_f1 = train_scores[0]
             train_factual_f1 = train_scores[1]
 
             # Compute validation metrics
-            val_scores = scorer(logits[val_mask].ge(0), labels)
+            val_scores = scorer(logits[val_mask].ge(0), labels[val_mask])
             val_misinformation_f1 = val_scores[0]
             val_factual_f1 = val_scores[1]
 
@@ -141,24 +172,37 @@ def train(num_epochs: int,
 
         # Gather statistics to be logged
         stats = [
-            ('Train loss', loss.item()),
-            ('Train misinformation F1', train_misinformation_f1.item()),
-            ('Train factual F1', train_factual_f1.item()),
-            ('Validation loss', val_loss.item()),
-            ('Validation misinformation F1', val_misinformation_f1.item()),
-            ('Validation factual F1', val_factual_f1.item()),
-            ('Learning rate', opt.param_groups[0]['lr'])
+            ('train_loss', loss.item()),
+            ('train_misinformation_f1', train_misinformation_f1.item()),
+            ('train_factual_f1', train_factual_f1.item()),
+            ('val_loss', val_loss.item()),
+            ('val_misinformation_f1', val_misinformation_f1.item()),
+            ('val_factual_f1', val_factual_f1.item()),
+            ('learning_rate', opt.param_groups[0]['lr'])
         ]
 
-        # Report statistics
+        # Report and log statistics
         log = f'Epoch {epoch}\n'
+        config['epoch'] = epoch
         for statistic, value in stats:
             log += f'> {statistic}: {value}\n'
+            config[statistic] = value
         logger.info(log)
 
-        # Save model
-        torch.save(model.state_dict(), str(model_path))
+        # Save model and config
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            torch.save(model.state_dict(), str(model_path))
+            with config_path.open('w') as f:
+                json.dump(config, f)
 
 
 if __name__ == '__main__':
+    # Set up logging
+    fmt = (colored('%(asctime)s [%(levelname)s] <%(name)s>\n↳ ', 'green') +
+           colored('%(message)s', 'yellow'))
+    logging.basicConfig(level=logging.INFO, format=fmt)
+    logger = logging.getLogger(__name__)
+
+    # Train the model
     train(num_epochs=10_000, hidden_dim=100, task='claim')
