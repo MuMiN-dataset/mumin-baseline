@@ -61,14 +61,14 @@ def train(num_epochs: int,
         # Save graph to disk
         save_graphs(str(graph_path), [graph])
 
-    # Store node features
-    feats = {node_type: graph.nodes[node_type].data['feat'].float()
-             for node_type in graph.ntypes}
-
     # Store labels and masks
     labels = graph.nodes[task].data['label']
     train_mask = graph.nodes[task].data['train_mask']
     val_mask = graph.nodes[task].data['val_mask']
+
+    # Store node features
+    feats = {node_type: graph.nodes[node_type].data['feat'].float()
+             for node_type in graph.ntypes}
 
     # Initialise dictionary with feature dimensions
     dims = {ntype: graph.nodes[ntype].data['feat'].shape[-1]
@@ -82,7 +82,9 @@ def train(num_epochs: int,
     model.train()
 
     # Set up path to state dict, and load model weights if they exist
-    model_path = Path('models') / f'{task}-model-{size}-{hidden_dim}.pt'
+    model_dir = Path('models')
+    model_dir.mkdir(exist_ok=True)
+    model_path = model_dir / f'{task}-model-{size}-{hidden_dim}.pt'
     if model_path.exists():
         model.load_state_dict(torch.load(str(model_path)))
 
