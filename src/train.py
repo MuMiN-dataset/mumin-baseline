@@ -18,6 +18,9 @@ from typing import Tuple
 import datetime as dt
 
 
+logger = logging.getLogger(__name__)
+
+
 def train(num_epochs: int,
           hidden_dim: int,
           size: str = 'small',
@@ -85,8 +88,8 @@ def train(num_epochs: int,
 
     # Store labels and masks
     labels = graph.nodes[task].data['label']
-    train_mask = graph.nodes[task].data['train_mask']
-    val_mask = graph.nodes[task].data['val_mask']
+    train_mask = graph.nodes[task].data['train_mask'].bool()
+    val_mask = graph.nodes[task].data['val_mask'].bool()
 
     # Store node features
     feats = {node_type: graph.nodes[node_type].data['feat'].float()
@@ -202,7 +205,6 @@ if __name__ == '__main__':
     fmt = (colored('%(asctime)s [%(levelname)s] <%(name)s>\n↳ ', 'green') +
            colored('%(message)s', 'yellow'))
     logging.basicConfig(level=logging.INFO, format=fmt)
-    logger = logging.getLogger(__name__)
 
     # Train the model
     train(num_epochs=10_000, hidden_dim=100, task='claim')
