@@ -14,7 +14,7 @@ from heterographconv import HeteroGraphConv
 
 class HeteroGraphSAGE(nn.Module):
     def __init__(self,
-                 dropout: float = 0.5,
+                 dropout: float,
                  feat_dict: Dict[Tuple[str, str, str],
                                  Tuple[int, int, int]]):
         super().__init__()
