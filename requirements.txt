@@ -49,7 +49,7 @@ MarkupSafe==2.0.1
 matplotlib-inline==0.1.3
 mccabe==0.6.1
 mistune==0.8.4
--e git+ssh://git@github.com/CLARITI-REPHRAIN/mumin-build.git@8864ef96879d083b652de0543b4611baeee3570d#egg=mumin
+mumin==0.5.3
 nbclassic==0.3.4
 nbclient==0.5.9
 nbconvert==6.3.0
