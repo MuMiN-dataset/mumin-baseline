@@ -43,8 +43,8 @@ class SAGEConv(nn.Module):
     def __init__(self,
                  in_feats: int,
                  out_feats: int,
-                 activation: Optional[Callable] = None,
-                 dropout: float):
+                 dropout: float,
+                 activation: Optional[Callable] = None):
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
