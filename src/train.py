@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 def train(num_epochs: int,
           hidden_dim: int,
+          dropout: float = 0.0,
           size: str = 'small',
           task: str = 'claim',
           initial_lr: float = 5e-5,
@@ -37,6 +38,8 @@ def train(num_epochs: int,
             The number of epochs to train for.
         hidden_dim (int):
             The dimension of the hidden layer.
+        dropout (float, optional):
+            The amount of dropout. Defaults to 0.0.
         size (str, optional):
             The size of the dataset to use. Defaults to 'small'.
         task (str, optional):
@@ -61,6 +64,7 @@ def train(num_epochs: int,
 
     # Set config
     config = dict(hidden_dim=hidden_dim,
+                  dropout=dropout,
                   size=size,
                   task=task,
                   initial_lr=initial_lr,
@@ -102,7 +106,7 @@ def train(num_epochs: int,
                  for rel in graph.canonical_etypes}
 
     # Initialise model
-    model = HeteroGraphSAGE(feat_dict)
+    model = HeteroGraphSAGE(dropout=dropout, feat_dict=feat_dict)
     model.to(device)
     model.train()
 
@@ -207,4 +211,4 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format=fmt)
 
     # Train the model
-    train(num_epochs=10_000, hidden_dim=100, task='claim')
+    train(num_epochs=10_000, hidden_dim=500, dropout=0.5, task='claim')
