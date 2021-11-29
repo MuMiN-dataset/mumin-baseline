@@ -14,6 +14,7 @@ from heterographconv import HeteroGraphConv
 
 class HeteroGraphSAGE(nn.Module):
     def __init__(self,
+                 input_dropout: float,
                  dropout: float,
                  feat_dict: Dict[Tuple[str, str, str],
                                  Tuple[int, int, int]]):
@@ -24,7 +25,7 @@ class HeteroGraphSAGE(nn.Module):
             {rel: SAGEConv(in_feats=(feats[0], feats[2]),
                            out_feats=feats[1],
                            activation=F.relu,
-                           dropout=dropout)
+                           dropout=input_dropout)
              for rel, feats in feat_dict.items()},
             aggregate='sum')
 
