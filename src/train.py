@@ -210,8 +210,14 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    train(num_epochs=10_000,
-          hidden_dim=768,
-          input_dropout=0.0,
-          dropout=0.1,
-          task='claim')
+    config = dict(num_epochs=10_000,
+                  hidden_dim=768,
+                  input_dropout=0.0,
+                  dropout=0.1,
+                  size='small',
+                  task='tweet',
+                  lr_factor=0.8,
+                  lr_patience=10,
+                  betas=(0.8, 0.998),
+                  pos_weight=20.)
+    train(**config)
