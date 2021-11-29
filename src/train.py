@@ -212,6 +212,6 @@ def train(num_epochs: int,
 if __name__ == '__main__':
     train(num_epochs=10_000,
           hidden_dim=768,
-          hidden_dropout=0.0,
+          input_dropout=0.0,
           dropout=0.1,
           task='claim')
