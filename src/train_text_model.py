@@ -84,7 +84,7 @@ def main(model_id: str) -> Dict[str, float]:
     )
 
     # Set up early stopping callback
-    early_stopping = EarlyStoppingCallback(early_stopping_patience=2)
+    early_stopping = EarlyStoppingCallback(early_stopping_patience=20)
 
     # Initialise the Trainer
     trainer = Trainer(model=model,
