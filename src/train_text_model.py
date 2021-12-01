@@ -39,7 +39,7 @@ def main(model_id: str) -> Dict[str, float]:
 
     # Load the tokenizer and model
     config_dict = dict(num_labels=2,
-                       id2label=dict(0='Misinformation', 1='Factual'),
+                       id2label={0: 'Misinformation', 1: 'Factual'},
                        label2id=dict(Misinformation=0, Factual=1))
     config = AutoConfig.from_pretrained(model_id, **config_dict)
     model = AutoModelForSequenceClassification.from_pretrained(model_id,
