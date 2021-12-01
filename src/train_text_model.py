@@ -20,9 +20,9 @@ def main(model_id: str) -> Dict[str, float]:
             values the scores.
     '''
     # Load the dataset
-    claim_df = pd.read_pickle('claim', compression='xz')
-    train_df = claim_df.query('small_train_mask == True')
-    val_df = claim_df.query('small_val_mask == True')
+    claim_df = pd.read_pickle('claim_dump.pkl')
+    train_df = claim_df.query('train_mask == True')
+    val_df = claim_df.query('val_mask == True')
 
     # Convert the dataset to the HuggingFace format
     train = Dataset.from_dict(dict(text=train_df.claim.tolist(),
@@ -32,8 +32,8 @@ def main(model_id: str) -> Dict[str, float]:
 
     # Load the tokenizer and model
     config_dict = dict(num_labels=2,
-                       id2label={0: 'Misinformation', 1: 'Factual'},
-                       label2id=dict(Misinformation=0, Factual=1))
+                       id2label={0: 'misinformation', 1: 'factual'},
+                       label2id=dict(misinformation=0, factual=1))
     config = AutoConfig.from_pretrained(model_id, **config_dict)
     model = AutoModelForSequenceClassification.from_pretrained(model_id,
                                                                config=config)
