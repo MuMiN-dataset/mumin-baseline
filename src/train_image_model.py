@@ -7,8 +7,14 @@ from typing import Dict
 import sys
 import pandas as pd
 import numpy as np
+from mumin import MuminDataset
+import os
+from dotenv import load_dotenv
 
 from trainer_with_class_weights import TrainerWithClassWeights
+
+
+load_dotenv()
 
 
 def main(model_id: str) -> Dict[str, float]:
@@ -23,15 +29,35 @@ def main(model_id: str) -> Dict[str, float]:
             values the scores.
     '''
     # Load the dataset
+    mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'])
+    mumin_dataset.compile()
+    image_df = mumin_dataset.nodes['image']
+    tweet2image_df = mumin_dataset.rels[('tweet', 'has_image', 'image')]
+    tweet2claim_df = mumin_dataset.rels[('tweet', 'discusses', 'claim')]
+    claim_df = mumin_dataset.nodes['claim']
+    df = (image_df.merge(tweet2image_df.rename(columns=dict(src='tweet_idx',
+                                                            tgt='image_idx')),
+                         left_index=True,
+                         right_on='image_idx')
+                  .merge(tweet2claim_df.rename(columns=dict(src='tweet_idx',
+                                                            tgt='claim_idx')),
+                         left_on='tweet_idx',
+                         right_index=True)
+                  .merge(claim_df, left_on='claim_idx', right_index=True))
+    df = df[['pixels', 'verdict', 'train_mask', 'val_mask', 'test_mask']]
+
     image_df = pd.read_pickle('image_dump.pkl')
     train_df = image_df.query('train_mask == True')
     val_df = image_df.query('val_mask == True')
+    test_df = image_df.query('test_mask == True')
 
     # Convert the dataset to the HuggingFace format
     train = Dataset.from_dict(dict(pixels=train_df.claim.tolist(),
                                    orig_label=train_df.verdict.tolist()))
     val = Dataset.from_dict(dict(pixels=val_df.claim.tolist(),
                                  orig_label=val_df.verdict.tolist()))
+    test = Dataset.from_dict(dict(pixels=test_df.claim.tolist(),
+                                  orig_label=test_df.verdict.tolist()))
 
     # Load the feature extractor and model
     config_dict = dict(num_labels=2,
@@ -62,6 +88,7 @@ def main(model_id: str) -> Dict[str, float]:
 
     train = train.map(preprocess, batched=True)
     val = val.map(preprocess, batched=True)
+    test = test.map(preprocess, batched=True)
 
     # Set up compute_metrics function
     def compute_metrics(preds_and_labels: tuple) -> Dict[str, float]:
@@ -101,7 +128,6 @@ def main(model_id: str) -> Dict[str, float]:
                                       args=training_args,
                                       train_dataset=train,
                                       eval_dataset=val,
-                                      tokenizer=tokenizer,
                                       compute_metrics=compute_metrics,
                                       class_weights=[1., 20.])
 
@@ -109,7 +135,9 @@ def main(model_id: str) -> Dict[str, float]:
     trainer.train()
 
     # Evaluate the model
-    results = trainer.evaluate()
+    results = dict(train=trainer.evaluate(dataset=train),
+                   val=trainer.evaluate(dataset=val),
+                   test=trainer.evaluate(dataset=test))
 
     return results
 
@@ -117,4 +145,5 @@ def main(model_id: str) -> Dict[str, float]:
 if __name__ == '__main__':
     patch_model_id = 'google/vit-base-patch16-224-in21k'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else patch_model_id
-    main(model_id)
+    results = main(model_id)
+    print(results)
