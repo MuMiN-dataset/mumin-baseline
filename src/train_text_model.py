@@ -39,8 +39,8 @@ def main(model_id: str) -> Dict[str, float]:
     config_dict = dict(num_labels=2,
                        id2label={0: 'misinformation', 1: 'factual'},
                        label2id=dict(misinformation=0, factual=1),
-                       hidden_dropout_prob=0.2,
-                       attention_probs_dropout_prob=0.2,
+                       hidden_dropout_prob=0.5,
+                       attention_probs_dropout_prob=0.5,
                        classifier_dropout_prob=0.5)
     config = AutoConfig.from_pretrained(model_id, **config_dict)
     model = AutoModelForSequenceClassification.from_pretrained(model_id,
@@ -98,7 +98,7 @@ def main(model_id: str) -> Dict[str, float]:
     trainer = TrainerWithClassWeights(model=model,
                                       args=training_args,
                                       train_dataset=train,
-                                      eval_dataset=train,
+                                      eval_dataset=val,
                                       tokenizer=tokenizer,
                                       compute_metrics=compute_metrics,
                                       class_weights=[1., 20.])
@@ -113,5 +113,6 @@ def main(model_id: str) -> Dict[str, float]:
 
 
 if __name__ == '__main__':
-    model_id = sys.argv[-1] if len(sys.argv) > 1 else 'xlm-roberta-base'
+    labse_model = 'sentence-transformers/LaBSE'
+    model_id = sys.argv[-1] if len(sys.argv) > 1 else labse_model
     main(model_id)
