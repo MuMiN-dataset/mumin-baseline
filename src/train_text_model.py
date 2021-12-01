@@ -20,7 +20,7 @@ def main(model_id: str) -> Dict[str, float]:
             values the scores.
     '''
     # Load the dataset
-    claim_df = pd.read_pickle('claim')
+    claim_df = pd.read_pickle('claim', compression='xz')
     train_df = claim_df.query('train_mask == True')
     val_df = claim_df.query('val_mask == True')
 
