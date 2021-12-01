@@ -39,7 +39,7 @@ class TrainerWithClassWeights(Trainer):
         logits = logits.view(-1, self.model.config.num_labels)
 
         # Compute custom loss
-        loss_fct = nn.CrossEntropyLoss(weight=)
+        loss_fct = nn.CrossEntropyLoss(weight=self.class_weights)
         loss = loss_fct(logits, labels.view(-1))
 
         return (loss, outputs) if return_outputs else loss
