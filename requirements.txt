@@ -1,7 +1,10 @@
+aiohttp==3.8.1
+aiosignal==1.2.0
 anyio==3.4.0
 appnope==0.1.2
 argon2-cffi==21.1.0
 astroid==2.8.3
+async-timeout==4.0.1
 attrs==21.2.0
 Babel==2.9.1
 backcall==0.2.0
@@ -13,15 +16,19 @@ charset-normalizer==2.0.7
 click==8.0.3
 cssselect==1.1.0
 dataclasses==0.6
+datasets==1.16.1
 debugpy==1.5.1
 decorator==5.1.0
 defusedxml==0.7.1
 dgl==0.7.2
+dill==0.3.4
 entrypoints==0.3
 feedfinder2==0.0.4
 feedparser==6.0.8
 filelock==3.3.1
 flake8==4.0.1
+frozenlist==1.2.0
+fsspec==2021.11.1
 future==0.18.2
 huggingface-hub==0.1.2
 idna==3.3
@@ -49,6 +56,8 @@ MarkupSafe==2.0.1
 matplotlib-inline==0.1.3
 mccabe==0.6.1
 mistune==0.8.4
+multidict==5.2.0
+multiprocess==0.70.12.2
 mumin==0.5.3
 nbclassic==0.3.4
 nbclient==0.5.9
@@ -122,4 +131,6 @@ webencodings==0.5.1
 websocket-client==1.2.1
 wget==3.2
 wrapt==1.13.2
+xxhash==2.0.2
+yarl==1.7.2
 zipp==3.6.0
