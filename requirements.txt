@@ -20,7 +20,7 @@ datasets==1.16.1
 debugpy==1.5.1
 decorator==5.1.0
 defusedxml==0.7.1
-dgl==0.7.2
+dgl==0.6.1
 dill==0.3.4
 entrypoints==0.3
 feedfinder2==0.0.4
