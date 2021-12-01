@@ -103,5 +103,5 @@ def main(model_id: str) -> Dict[str, float]:
 
 
 if __name__ == '__main__':
-    model_id = sys.argv[1]
+    model_id = sys.argv[-1] if len(sys.argv) > 1 else 'xlm-roberta-base'
     main(model_id)
