@@ -21,6 +21,7 @@ def main(model_id: str) -> Dict[str, float]:
     '''
     # Load the dataset
     claim_df = pd.read_pickle('claim', compression='xz')
+    breakpoint()
     train_df = claim_df.query('train_mask == True')
     val_df = claim_df.query('val_mask == True')
 
