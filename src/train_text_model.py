@@ -56,12 +56,14 @@ def main(model_id: str) -> Dict[str, float]:
     # Set up compute_metrics function
     def compute_metrics(preds_and_labels: tuple) -> Dict[str, float]:
         metric = load_metric('f1')
-        predictions, labels = predictions_and_labels
+        predictions, labels = preds_and_labels
         predictions = predictions.argmax(axis=-1)
-        results = metric.compute(predictions=predictions,
+        factual_results = metric.compute(predictions=predictions,
                                  references=labels)
-        breakpoint()
-        return dict(factual_f1=results['f1'])
+        misinfo_results = metric.compute(predictions=1-predictions,
+                                 references=1-labels)
+        return dict(factual_f1=factual_results['f1'],
+                    misinfo_f1=misinfo_results['f1'])
 
     # Set up the training arguments
     training_args = TrainingArguments(
@@ -77,7 +79,7 @@ def main(model_id: str) -> Dict[str, float]:
         learning_rate=2e-5,
         warmup_steps=len(train),
         gradient_accumulation_steps=4,
-        metric_for_best_model='loss',
+        metric_for_best_model='factual_f1',
         load_best_model_at_end=True,
     )
 
