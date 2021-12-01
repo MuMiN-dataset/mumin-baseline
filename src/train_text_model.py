@@ -7,6 +7,7 @@ from mumin import MuminDataset
 from dotenv import load_dotenv
 from typing import Dict
 import os
+import sys
 
 load_dotenv()
 
@@ -85,4 +86,5 @@ def main(model_id: str) -> Dict[str, float]:
 
 
 if __name__ == '__main__':
-    main()
+    model_id = sys.argv[1]
+    main(model_id)
