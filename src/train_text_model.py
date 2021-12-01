@@ -21,9 +21,8 @@ def main(model_id: str) -> Dict[str, float]:
     '''
     # Load the dataset
     claim_df = pd.read_pickle('claim', compression='xz')
-    breakpoint()
-    train_df = claim_df.query('train_mask == True')
-    val_df = claim_df.query('val_mask == True')
+    train_df = claim_df.query('small_train_mask == True')
+    val_df = claim_df.query('small_val_mask == True')
 
     # Convert the dataset to the HuggingFace format
     train = Dataset.from_dict(dict(text=train_df.claim.tolist(),
