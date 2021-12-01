@@ -3,13 +3,9 @@
 from transformers import (AutoTokenizer, AutoModelForSequenceClassification,
                           AutoConfig, TrainingArguments, Trainer)
 from datasets import Dataset
-from mumin import MuminDataset
-from dotenv import load_dotenv
 from typing import Dict
-import os
 import sys
-
-load_dotenv()
+import pandas as pd
 
 
 def main(model_id: str) -> Dict[str, float]:
@@ -24,11 +20,7 @@ def main(model_id: str) -> Dict[str, float]:
             values the scores.
     '''
     # Load the dataset
-    mumin_dataset = MuminDataset(os.getenv('TWITTER_API_KEY'), size='small')
-    mumin_dataset.compile()
-
-    # Extract the claims
-    claim_df = mumin_dataset.nodes['claim']
+    claim_df = pd.read_pickle('claim')
     train_df = claim_df.query('train_mask == True')
     val_df = claim_df.query('val_mask == True')
 
