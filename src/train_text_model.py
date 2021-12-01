@@ -3,7 +3,7 @@
 from transformers import (AutoTokenizer, AutoModelForSequenceClassification,
                           AutoConfig, TrainingArguments, Trainer,
                           EarlyStoppingCallback)
-from datasets import Dataset
+from datasets import Dataset, load_metric
 from typing import Dict
 import sys
 import pandas as pd
@@ -27,9 +27,9 @@ def main(model_id: str) -> Dict[str, float]:
 
     # Convert the dataset to the HuggingFace format
     train = Dataset.from_dict(dict(text=train_df.claim.tolist(),
-                                   labels=train_df.verdict.tolist()))
+                                   orig_label=train_df.verdict.tolist()))
     val = Dataset.from_dict(dict(text=val_df.claim.tolist(),
-                                 labels=val_df.verdict.tolist()))
+                                 orig_label=val_df.verdict.tolist()))
 
     # Load the tokenizer and model
     config_dict = dict(num_labels=2,
@@ -40,15 +40,28 @@ def main(model_id: str) -> Dict[str, float]:
                                                                config=config)
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
-    # Tokenize the datasets
-    def tokenise(examples: dict) -> dict:
-        doc = examples['doc']
-        return tokenizer(doc,
-                         truncation=True,
-                         padding=True,
-                         max_length=512)
-    train = train.map(tokenise, batched=True)
-    val = val.map(tokenise, batched=True)
+    # Preprocess the datasets
+    def preprocess(examples: dict) -> dict:
+        labels = ['misinformation', 'factual']
+        examples['labels'] = [labels.index(lbl)
+                              for lbl in examples['orig_label']]
+        examples = tokenizer(examples['text'],
+                              truncation=True,
+                              padding=True,
+                              max_length=512)
+        return examples
+    train = train.map(preprocess, batched=True)
+    val = val.map(preprocess, batched=True)
+
+    # Set up compute_metrics function
+    def compute_metrics(preds_and_labels: tuple) -> Dict[str, float]:
+        metric = load_metric('f1')
+        predictions, labels = predictions_and_labels
+        predictions = predictions.argmax(axis=-1)
+        results = metric.compute(predictions=predictions,
+                                 references=labels)
+        breakpoint()
+        return dict(factual_f1=results['f1'])
 
     # Set up the training arguments
     training_args = TrainingArguments(
@@ -77,6 +90,7 @@ def main(model_id: str) -> Dict[str, float]:
                       train_dataset=train,
                       eval_dataset=val,
                       tokenizer=tokenizer,
+                      compute_metrics=compute_metrics,
                       callbacks=[early_stopping])
 
     # Train the model
