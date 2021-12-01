@@ -84,7 +84,6 @@ def main(model_id: str) -> Dict[str, float]:
         metric_for_best_model='factual_f1',
         load_best_model_at_end=True,
     )
-    training_args._n_gpu = 1
 
     # Initialise the Trainer
     trainer = Trainer(model=model,
