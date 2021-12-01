@@ -1,8 +1,7 @@
 '''Finetune a transformer model on the dataset'''
 
 from transformers import (AutoTokenizer, AutoModelForSequenceClassification,
-                          AutoConfig, TrainingArguments, Trainer,
-                          EarlyStoppingCallback)
+                          AutoConfig, TrainingArguments, Trainer)
 from datasets import Dataset, load_metric
 from typing import Dict
 import sys
@@ -86,17 +85,13 @@ def main(model_id: str) -> Dict[str, float]:
         load_best_model_at_end=True,
     )
 
-    # Set up early stopping callback
-    early_stopping = EarlyStoppingCallback(early_stopping_patience=20)
-
     # Initialise the Trainer
     trainer = Trainer(model=model,
                       args=training_args,
                       train_dataset=train,
                       eval_dataset=val,
                       tokenizer=tokenizer,
-                      compute_metrics=compute_metrics,
-                      callbacks=[early_stopping])
+                      compute_metrics=compute_metrics)
 
     # Train the model
     trainer.train()
