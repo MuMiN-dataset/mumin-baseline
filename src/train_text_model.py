@@ -1,7 +1,8 @@
 '''Finetune a transformer model on the dataset'''
 
 from transformers import (AutoTokenizer, AutoModelForSequenceClassification,
-                          AutoConfig, TrainingArguments, Trainer)
+                          AutoConfig, TrainingArguments, Trainer,
+                          EarlyStoppingCallback)
 from datasets import Dataset
 from typing import Dict
 import sys
@@ -38,6 +39,16 @@ def main(model_id: str) -> Dict[str, float]:
     model = AutoModelForSequenceClassification.from_pretrained(model_id,
                                                                config=config)
     tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+    # Tokenize the datasets
+    def tokenise(examples: dict) -> dict:
+        doc = examples['doc']
+        return tokenizer(doc,
+                         truncation=True,
+                         padding=True,
+                         max_length=512)
+    train = train.map(tokenise, batched=True)
+    val = val.map(tokenise, batched=True)
 
     # Set up the training arguments
     training_args = TrainingArguments(
