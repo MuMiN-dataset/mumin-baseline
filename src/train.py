@@ -213,11 +213,11 @@ if __name__ == '__main__':
     config = dict(num_epochs=10_000,
                   hidden_dim=768,
                   input_dropout=0.0,
-                  dropout=0.1,
-                  size='small',
+                  dropout=0.0,
+                  size='medium',
                   task='tweet',
                   lr_factor=0.8,
                   lr_patience=10,
                   betas=(0.8, 0.998),
-                  pos_weight=20.)
+                  pos_weight=10.)
     train(**config)
