@@ -1,7 +1,7 @@
 '''Finetune a transformer model on the dataset'''
 
 from transformers import (AutoTokenizer, AutoModelForSequenceClassification,
-                          AutoConfig, TrainingArguments, Trainer)
+                          AutoConfig, TrainingArguments)
 from datasets import Dataset, load_metric
 from typing import Dict
 import sys
@@ -25,17 +25,23 @@ def main(model_id: str) -> Dict[str, float]:
     claim_df = pd.read_pickle('claim_dump.pkl')
     train_df = claim_df.query('train_mask == True')
     val_df = claim_df.query('val_mask == True')
+    test_df = claim_df.query('test_mask == True')
 
     # Convert the dataset to the HuggingFace format
     train = Dataset.from_dict(dict(text=train_df.claim.tolist(),
                                    orig_label=train_df.verdict.tolist()))
     val = Dataset.from_dict(dict(text=val_df.claim.tolist(),
                                  orig_label=val_df.verdict.tolist()))
+    test = Dataset.from_dict(dict(text=test_df.claim.tolist(),
+                                 orig_label=test_df.verdict.tolist()))
 
     # Load the tokenizer and model
     config_dict = dict(num_labels=2,
                        id2label={0: 'misinformation', 1: 'factual'},
-                       label2id=dict(misinformation=0, factual=1))
+                       label2id=dict(misinformation=0, factual=1),
+                       hidden_dropout_prob=0.2,
+                       attention_probs_dropout_prob=0.2,
+                       classifier_dropout_prob=0.5)
     config = AutoConfig.from_pretrained(model_id, **config_dict)
     model = AutoModelForSequenceClassification.from_pretrained(model_id,
                                                                config=config)
@@ -53,6 +59,7 @@ def main(model_id: str) -> Dict[str, float]:
         return examples
     train = train.map(preprocess, batched=True)
     val = val.map(preprocess, batched=True)
+    test = test.map(preprocess, batched=True)
 
     # Set up compute_metrics function
     def compute_metrics(preds_and_labels: tuple) -> Dict[str, float]:
@@ -91,7 +98,7 @@ def main(model_id: str) -> Dict[str, float]:
     trainer = TrainerWithClassWeights(model=model,
                                       args=training_args,
                                       train_dataset=train,
-                                      eval_dataset=val,
+                                      eval_dataset=train,
                                       tokenizer=tokenizer,
                                       compute_metrics=compute_metrics,
                                       class_weights=[1., 20.])
@@ -100,7 +107,7 @@ def main(model_id: str) -> Dict[str, float]:
     trainer.train()
 
     # Evaluate the model
-    results = trainer.evaluate()
+    results = trainer.evaluate(test)
 
     return results
 
