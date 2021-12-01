@@ -77,7 +77,7 @@ def main(model_id: str) -> Dict[str, float]:
         report_to='none',
         save_total_limit=1,
         learning_rate=2e-5,
-        warmup_steps=len(train),
+        warmup_ratio=1.0,
         gradient_accumulation_steps=4,
         metric_for_best_model='factual_f1',
         load_best_model_at_end=True,
