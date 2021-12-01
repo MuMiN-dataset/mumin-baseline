@@ -1,13 +1,14 @@
 '''Finetune a vision transformer model on the dataset'''
 
 from transformers import (AutoModelForImageClassification,
-                          AutoFeatureExtractor, AutoConfig, TrainingArguments,
-                          Trainer)
+                          AutoFeatureExtractor, AutoConfig, TrainingArguments)
 from datasets import Dataset, load_metric
 from typing import Dict
 import sys
 import pandas as pd
 import numpy as np
+
+from trainer_with_class_weights import TrainerWithClassWeights
 
 
 def main(model_id: str) -> Dict[str, float]:
@@ -96,12 +97,13 @@ def main(model_id: str) -> Dict[str, float]:
     )
 
     # Initialise the Trainer
-    trainer = Trainer(model=model,
-                      args=training_args,
-                      train_dataset=train,
-                      eval_dataset=val,
-                      tokenizer=tokenizer,
-                      compute_metrics=compute_metrics)
+    trainer = TrainerWithClassWeights(model=model,
+                                      args=training_args,
+                                      train_dataset=train,
+                                      eval_dataset=val,
+                                      tokenizer=tokenizer,
+                                      compute_metrics=compute_metrics,
+                                      class_weights=[1., 20.])
 
     # Train the model
     trainer.train()
