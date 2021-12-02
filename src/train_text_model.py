@@ -107,9 +107,9 @@ def main(model_id: str) -> Dict[str, float]:
     trainer.train()
 
     # Evaluate the model
-    results = dict(train=trainer.evaluate(dataset=train),
-                   val=trainer.evaluate(dataset=val),
-                   test=trainer.evaluate(dataset=test))
+    results = dict(train=trainer.evaluate(train),
+                   val=trainer.evaluate(val),
+                   test=trainer.evaluate(test))
 
     return results
 
