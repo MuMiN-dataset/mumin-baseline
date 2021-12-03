@@ -7,6 +7,7 @@ from typing import Dict
 import sys
 import os
 from dotenv import load_dotenv
+from mumin import MuminDataset
 
 from trainer_with_class_weights import TrainerWithClassWeights
 
