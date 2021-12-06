@@ -6,6 +6,7 @@ from datasets import Dataset, load_metric
 from typing import Dict
 import sys
 import os
+import pandas as pd
 from dotenv import load_dotenv
 from mumin import MuminDataset
 
@@ -27,9 +28,7 @@ def main(model_id: str) -> Dict[str, float]:
             values the scores.
     '''
     # Load the dataset
-    mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'])
-    mumin_dataset.compile()
-    claim_df = mumin_dataset.nodes['claim']
+    claim_df = pd.read_pickle('claim_dump_small.pkl.xz')
     train_df = claim_df.query('train_mask == True')
     val_df = claim_df.query('val_mask == True')
     test_df = claim_df.query('test_mask == True')
