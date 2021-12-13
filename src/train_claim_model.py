@@ -1,4 +1,4 @@
-'''Finetune a transformer model on the dataset'''
+'''Finetune a transformer model on the claim part of the dataset'''
 
 from transformers import (AutoTokenizer, AutoModelForSequenceClassification,
                           AutoConfig, TrainingArguments)
