@@ -38,18 +38,18 @@ def main(model_id: str) -> Dict[str, float]:
                          left_index=True,
                          right_on='tweet_idx')
                   .merge(claim_df, left_on='claim_idx', right_index=True))
-    tweet_df = df[['text', 'verdict', 'train_mask', 'val_mask', 'test_mask']]
-    train_df = image_df.query('train_mask == True')
-    val_df = image_df.query('val_mask == True')
-    test_df = image_df.query('test_mask == True')
+    tweet_df = df[['text', 'label', 'train_mask', 'val_mask', 'test_mask']]
+    train_df = tweet_df.query('train_mask == True')
+    val_df = tweet_df.query('val_mask == True')
+    test_df = tweet_df.query('test_mask == True')
 
     # Convert the dataset to the HuggingFace format
     train = Dataset.from_dict(dict(text=train_df.text.tolist(),
-                                   orig_label=train_df.verdict.tolist()))
+                                   orig_label=train_df.label.tolist()))
     val = Dataset.from_dict(dict(text=val_df.text.tolist(),
-                                 orig_label=val_df.verdict.tolist()))
+                                 orig_label=val_df.label.tolist()))
     test = Dataset.from_dict(dict(text=test_df.text.tolist(),
-                                 orig_label=test_df.verdict.tolist()))
+                                 orig_label=test_df.label.tolist()))
 
     # Load the tokenizer and model
     config_dict = dict(num_labels=2,
@@ -98,9 +98,9 @@ def main(model_id: str) -> Dict[str, float]:
         evaluation_strategy='steps',
         logging_strategy='steps',
         save_strategy='steps',
-        eval_steps=100,
-        logging_steps=100,
-        save_steps=100,
+        eval_steps=1000,
+        logging_steps=1000,
+        save_steps=1000,
         report_to='none',
         save_total_limit=1,
         learning_rate=2e-5,
