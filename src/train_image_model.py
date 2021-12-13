@@ -29,7 +29,7 @@ def main(model_id: str) -> Dict[str, float]:
             values the scores.
     '''
     # Load the dataset
-    mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'])
+    mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'], size='small')
     mumin_dataset.compile()
     image_df = mumin_dataset.nodes['image']
     tweet2image_df = mumin_dataset.rels[('tweet', 'has_image', 'image')]
@@ -41,8 +41,7 @@ def main(model_id: str) -> Dict[str, float]:
                          right_on='image_idx')
                   .merge(tweet2claim_df.rename(columns=dict(src='tweet_idx',
                                                             tgt='claim_idx')),
-                         left_on='tweet_idx',
-                         right_index=True)
+                         on='tweet_idx')
                   .merge(claim_df, left_on='claim_idx', right_index=True))
     image_df = df[['pixels', 'verdict', 'train_mask', 'val_mask', 'test_mask']]
     train_df = image_df.query('train_mask == True')
