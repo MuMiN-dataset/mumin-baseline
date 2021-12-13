@@ -94,8 +94,8 @@ def train(num_epochs: int,
         # fails in that case
         for ntype in ['claim', 'tweet']:
             for split in ['train', 'val', 'test']:
-                split_tensor = graph.nodes[ntype].data[f'{split}_split']
-                graph.nodes[ntype].data[f'{split}_split'] = split_tensor.int()
+                split_tensor = graph.nodes[ntype].data[f'{split}_mask']
+                graph.nodes[ntype].data[f'{split}_mask'] = split_tensor.int()
 
         # Save graph to disk
         save_graphs(str(graph_path), [graph])
