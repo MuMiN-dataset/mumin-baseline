@@ -28,7 +28,6 @@ def main(model_id: str) -> Dict[str, float]:
             values the scores.
     '''
     # Load the dataset
-    # Load the dataset
     mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'], size='small')
     mumin_dataset.compile()
     tweet_df = mumin_dataset.nodes['tweet']
