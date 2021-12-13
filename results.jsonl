@@ -1,6 +1,6 @@
 {
     "size": "small",
-    "type": "text",
+    "type": "claim",
     "model_id": "sentence-transformers/LaBSE",
     "train": {
                 "eval_loss": 0.36473149061203003,
@@ -32,7 +32,7 @@
 }
 {
     "size": "medium",
-    "type": "text",
+    "type": "claim",
     "model_id": "sentence-transformers/LaBSE",
     "train": {
                 "eval_loss": 0.18308216333389282,
@@ -64,7 +64,7 @@
 }
 {
     "size": "large",
-    "type": "text",
+    "type": "claim",
     "model_id": "sentence-transformers/LaBSE",
     "train": {
                "eval_loss": 0.18311560153961182,
