@@ -123,12 +123,8 @@ def train(num_epochs: int,
     # Set up the training and validation node IDs, being the node indexes where
     # `train_mask` and `val_mask` is True, respectively
     node_enum = torch.arange(graph.num_nodes(task))
-    train_nids = {ntype: torch.arange(graph.num_nodes(ntype)).int()
-                  for ntype in graph.ntypes}
-    train_nids[task] = train_nids[task][train_mask]
-    val_nids = {ntype: torch.arange(graph.num_nodes(ntype)).int()
-                for ntype in graph.ntypes}
-    val_nids[task] = val_nids[task][val_mask]
+    train_nids = {task: node_enum[train_mask].int()}
+    val_nids = {task: node_enum[val_mask].int()}
 
     # Set up the sampler
     sampler = MultiLayerFullNeighborSampler(n_layers=2)
@@ -325,5 +321,5 @@ if __name__ == '__main__':
                   lr_factor=0.8,
                   lr_patience=20,
                   betas=(0.8, 0.998),
-                  pos_weight=10.)
+                  pos_weight=1.)
     train(**config)
