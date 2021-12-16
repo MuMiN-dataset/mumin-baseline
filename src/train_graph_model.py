@@ -137,14 +137,14 @@ def train(num_epochs: int,
     train_dataloader = NodeDataLoader(g=graph,
                                       nids=train_nids,
                                       block_sampler=sampler,
-                                      batch_size=1024,
+                                      batch_size=4096,
                                       shuffle=True,
                                       drop_last=False,
                                       num_workers=4)
     val_dataloader = NodeDataLoader(g=graph,
                                     nids=val_nids,
                                     block_sampler=sampler,
-                                    batch_size=2048,
+                                    batch_size=4096,
                                     shuffle=False,
                                     drop_last=False,
                                     num_workers=4)
@@ -185,10 +185,14 @@ def train(num_epochs: int,
         val_factual_f1 = 0.0
 
         # Train model
+        total_batches = 0
         for _, _, blocks in tqdm(train_dataloader, desc='Training'):
 
-            if blocks[-1].dstdata['feat'][task].shape[0] == 0:
+            num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
+            if num_task_nodes == 0:
                 continue
+            else:
+                total_batches += 1
 
             # Reset the gradients
             opt.zero_grad()
@@ -231,13 +235,20 @@ def train(num_epochs: int,
             train_factual_f1 += float(factual_f1)
 
         # Divide the training metrics by the number of batches
-        train_loss /= len(train_dataloader)
-        train_misinformation_f1 /= len(train_dataloader)
-        train_factual_f1 /= len(train_dataloader)
+        train_loss /= total_batches
+        train_misinformation_f1 /= total_batches
+        train_factual_f1 /= total_batches
 
         # Evaluate model
+        total_batches = 0
         for _, _, blocks in tqdm(val_dataloader, desc='Evaluating'):
             with torch.no_grad():
+
+                num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
+                if num_task_nodes == 0:
+                    continue
+                else:
+                    total_batches += 1
 
                 # Ensure that `blocks` are on the correct device
                 blocks = [block.to(device) for block in blocks]
@@ -269,9 +280,9 @@ def train(num_epochs: int,
                 val_factual_f1 += float(factual_f1)
 
         # Divide the validation metrics by the number of batches
-        val_loss /= len(val_dataloader)
-        val_misinformation_f1 /= len(val_dataloader)
-        val_factual_f1 /= len(val_dataloader)
+        val_loss /= total_batches
+        val_misinformation_f1 /= total_batches
+        val_factual_f1 /= total_batches
 
         # Gather statistics to be logged
         stats = [
