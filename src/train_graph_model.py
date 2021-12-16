@@ -310,6 +310,9 @@ def train(num_epochs: int,
         # Update learning rate
         scheduler.step()
 
+    # Load best model
+    model.load_state_dict(str(model_path))
+
     # Final evaluation on the validation set
     total_batches = 0
     for _, _, blocks in tqdm(val_dataloader, desc='Evaluating'):
