@@ -64,7 +64,10 @@ def main(model_id: str) -> Dict[str, float]:
     # Load the feature extractor and model
     config_dict = dict(num_labels=2,
                        id2label={0: 'misinformation', 1: 'factual'},
-                       label2id=dict(misinformation=0, factual=1))
+                       label2id=dict(misinformation=0, factual=1),
+                       hidden_dropout_prob=0.5,
+                       attention_probs_dropout_prob=0.5,
+                       classifier_dropout_prob=0.5)
     config = AutoConfig.from_pretrained(model_id, **config_dict)
     model = AutoModelForImageClassification.from_pretrained(model_id,
                                                             config=config)
