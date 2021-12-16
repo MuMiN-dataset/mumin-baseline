@@ -10,6 +10,7 @@ import numpy as np
 from mumin import MuminDataset
 import os
 from dotenv import load_dotenv
+import gc
 
 from trainer_with_class_weights import TrainerWithClassWeights
 
@@ -55,6 +56,10 @@ def main(model_id: str) -> Dict[str, float]:
                                  orig_label=val_df.label.tolist()))
     test = Dataset.from_dict(dict(pixels=test_df.pixels.tolist(),
                                   orig_label=test_df.label.tolist()))
+
+    # Garbage collection
+    del df, image_df, claim_df, train_df, val_df, test_df, mumin_dataset
+    gc.collect()
 
     # Load the feature extractor and model
     config_dict = dict(num_labels=2,
