@@ -10,6 +10,8 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torchmetrics as tm
 from dgl.data.utils import save_graphs, load_graphs
+from dgl.dataloading.neighbor import MultiLayerNeighborSampler
+from dgl.dataloading.pytorch import NodeDataLoader
 import dgl
 import logging
 import json
@@ -101,13 +103,13 @@ def train(num_epochs: int,
         save_graphs(str(graph_path), [graph])
 
     # Store labels and masks
-    labels = graph.nodes[task].data['label']
+    #labels = graph.nodes[task].data['label']
     train_mask = graph.nodes[task].data['train_mask'].bool()
     val_mask = graph.nodes[task].data['val_mask'].bool()
 
     # Store node features
-    feats = {node_type: graph.nodes[node_type].data['feat'].float()
-             for node_type in graph.ntypes}
+    #feats = {node_type: graph.nodes[node_type].data['feat'].float()
+    #         for node_type in graph.ntypes}
 
     # Initialise dictionary with feature dimensions
     dims = {ntype: graph.nodes[ntype].data['feat'].shape[-1]
@@ -121,6 +123,30 @@ def train(num_epochs: int,
                             feat_dict=feat_dict)
     model.to(device)
     model.train()
+
+    # Set up the training and validation node IDs, being the node indexes where
+    # `train_mask` and `val_mask` is True, respectively
+    train_nids = torch.arange(graph.num_nodes(task))[train_mask].long()
+    val_nids = torch.arange(graph.num_nodes(task))[val_mask].long()
+
+    # Set up the sampler
+    sampler = MultiLayerNeighborSampler(fanouts=10, replace=False)
+
+    # Set up the dataloaders
+    train_dataloader = NodeDataLoader(g=graph,
+                                      nids=train_nids,
+                                      block_sampler=sampler,
+                                      batch_size=1024,
+                                      shuffle=True,
+                                      drop_last=False,
+                                      num_workers=8)
+    val_dataloader = NodeDataLoader(g=graph,
+                                    nids=val_nids,
+                                    block_sampler=sampler,
+                                    batch_size=1024,
+                                    shuffle=False,
+                                    drop_last=False,
+                                    num_workers=8)
 
     # Set up pos_weight
     pos_weight_tensor = torch.tensor(pos_weight).to(device)
@@ -149,54 +175,104 @@ def train(num_epochs: int,
 
     for epoch in range(num_epochs):
 
-        # Reset the gradients
-        opt.zero_grad()
+        # Reset metrics
+        train_loss = 0.0
+        train_misinformation_f1 = 0.0
+        train_factual_f1 = 0.0
+        val_loss = 0.0
+        val_misinformation_f1 = 0.0
+        val_factual_f1 = 0.0
 
-        # Forward propagation
-        logits = model(graph, feats)
-        logits = logits[task].squeeze(1)
+        # Train model
+        for _, _, blocks in train_dataloader:
 
-        # Compute loss
-        loss = F.binary_cross_entropy_with_logits(logits[train_mask],
-                                                  labels[train_mask].float(),
-                                                  pos_weight=pos_weight_tensor)
+            # Reset the gradients
+            opt.zero_grad()
 
-        with torch.no_grad():
+            # Ensure that `blocks` are on the correct device
+            blocks = [block.to(device) for block in blocks]
 
-            # Compute validation loss
-            val_loss = F.binary_cross_entropy_with_logits(
-                logits[val_mask],
-                labels[val_mask].float(),
+            # Get the input features and the output labels
+            input_feats = blocks[0].srcdata
+            output_labels = blocks[-1].dstdata[task].float()
+
+            # Forward propagation
+            logits = model(blocks, input_feats)
+            logits = logits[task].squeeze(1)
+
+            # Compute loss
+            loss = F.binary_cross_entropy_with_logits(
+                input=logits,
+                target=output_labels,
                 pos_weight=pos_weight_tensor
             )
 
             # Compute training metrics
-            train_scores = scorer(logits[train_mask].ge(0), labels[train_mask])
+            train_scores = scorer(logits.ge(0), output_labels)
             train_misinformation_f1 = train_scores[0]
             train_factual_f1 = train_scores[1]
 
-            # Compute validation metrics
-            val_scores = scorer(logits[val_mask].ge(0), labels[val_mask])
-            val_misinformation_f1 = val_scores[0]
-            val_factual_f1 = val_scores[1]
+            # Backward propagation
+            loss.backward()
 
-        # Backward propagation
-        loss.backward()
+            # Update gradients
+            opt.step()
 
-        # Update gradients
-        opt.step()
+            # Store the training metrics
+            train_loss += float(loss)
+            train_misinformation_f1 += float(train_misinformation_f1)
+            train_factual_f1 += float(train_factual_f1)
 
-        # Update learning rate
-        scheduler.step(val_loss)
+        # Divide the training metrics by the number of batches
+        train_loss /= len(train_dataloader)
+        train_misinformation_f1 /= len(train_dataloader)
+        train_factual_f1 /= len(train_dataloader)
+
+        # Evaluate model
+        for _, _, blocks in val_dataloader:
+            with torch.no_grad():
+
+                # Ensure that `blocks` are on the correct device
+                blocks = [block.to(device) for block in blocks]
+
+                # Get the input features and the output labels
+                input_feats = blocks[0].srcdata
+                output_labels = blocks[-1].dstdata[task].float()
+
+                # Forward propagation
+                logits = model(blocks, input_feats)
+                logits = logits[task].squeeze(1)
+
+                # Compute validation loss
+                val_loss = F.binary_cross_entropy_with_logits(
+                    input=logits,
+                    target=output_labels,
+                    pos_weight=pos_weight_tensor
+                )
+
+                # Compute validation metrics
+                val_scores = scorer(logits.ge(0), output_labels)
+                val_misinformation_f1 = val_scores[0]
+                val_factual_f1 = val_scores[1]
+
+                # Store the validation metrics
+                val_loss += float(val_loss)
+                val_misinformation_f1 += float(val_misinformation_f1)
+                val_factual_f1 += float(val_factual_f1)
+
+        # Divide the validation metrics by the number of batches
+        val_loss /= len(val_dataloader)
+        val_misinformation_f1 /= len(val_dataloader)
+        val_factual_f1 /= len(val_dataloader)
 
         # Gather statistics to be logged
         stats = [
-            ('train_loss', loss.item()),
-            ('train_misinformation_f1', train_misinformation_f1.item()),
-            ('train_factual_f1', train_factual_f1.item()),
-            ('val_loss', val_loss.item()),
-            ('val_misinformation_f1', val_misinformation_f1.item()),
-            ('val_factual_f1', val_factual_f1.item()),
+            ('train_loss', train_loss),
+            ('train_misinformation_f1', train_misinformation_f1),
+            ('train_factual_f1', train_factual_f1),
+            ('val_loss', val_loss),
+            ('val_misinformation_f1', val_misinformation_f1),
+            ('val_factual_f1', val_factual_f1),
             ('learning_rate', opt.param_groups[0]['lr'])
         ]
 
@@ -214,6 +290,9 @@ def train(num_epochs: int,
             torch.save(model.state_dict(), str(model_path))
             with config_path.open('w') as f:
                 json.dump(config, f)
+
+        # Update learning rate
+        scheduler.step(val_loss)
 
 
 if __name__ == '__main__':
