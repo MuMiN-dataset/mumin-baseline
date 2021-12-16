@@ -7,7 +7,7 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import LinearLR
 import torchmetrics as tm
 from dgl.data.utils import save_graphs, load_graphs
 from dgl.dataloading.neighbor import MultiLayerFullNeighborSampler
@@ -29,11 +29,9 @@ def train(num_epochs: int,
           dropout: float = 0.0,
           size: str = 'small',
           task: str = 'claim',
-          initial_lr: float = 5e-5,
-          lr_factor: float = 0.8,
-          lr_patience: int = 10,
+          lr: float = 5e-5,
           betas: Tuple[float, float] = (0.8, 0.998),
-          pos_weight: float = 20.):
+          pos_weight: float = 1.):
     '''Train a heterogeneous GraphConv model on the MuMiN dataset.
 
     Args:
@@ -51,17 +49,12 @@ def train(num_epochs: int,
             The task to consider, which can be either 'tweet' or 'claim',
             corresponding to doing thread-level or claim-level node
             classification. Defaults to 'claim'.
-        initial_lr (float, optional):
-            The initial learning rate. Defaults to 5e-5.
-        lr_factor (float, optional):
-            The factor by which to reduce the learning rate. Defaults to 0.8.
-        lr_patience (int, optional):
-            The number of epochs to wait before reducing the learning rate.
-            Defaults to 10.
+        lr (float, optional):
+            The learning rate. Defaults to 5e-5.
         betas (Tuple[float, float], optional):
             The coefficients for the Adam optimizer. Defaults to (0.8, 0.998).
         pos_weight (float, optional):
-            The weight to give to the positive examples. Defaults to 20.
+            The weight to give to the positive examples. Defaults to 1.0.
     '''
     # Set random seeds
     torch.manual_seed(4242)
@@ -73,9 +66,7 @@ def train(num_epochs: int,
                   dropout=dropout,
                   size=size,
                   task=task,
-                  initial_lr=initial_lr,
-                  lr_factor=lr_factor,
-                  lr_patience=lr_patience,
+                  lr=lr,
                   betas=betas,
                   pos_weight=pos_weight)
 
@@ -106,6 +97,7 @@ def train(num_epochs: int,
     # Store labels and masks
     train_mask = graph.nodes[task].data['train_mask'].bool()
     val_mask = graph.nodes[task].data['val_mask'].bool()
+    test_mask = graph.nodes[task].data['test_mask'].bool()
 
     # Initialise dictionary with feature dimensions
     dims = {ntype: graph.nodes[ntype].data['feat'].shape[-1]
@@ -144,6 +136,13 @@ def train(num_epochs: int,
                                     shuffle=False,
                                     drop_last=False,
                                     num_workers=4)
+    test_dataloader = NodeDataLoader(g=graph,
+                                     nids=test_nids,
+                                     block_sampler=sampler,
+                                     batch_size=4096,
+                                     shuffle=False,
+                                     drop_last=False,
+                                     num_workers=4)
 
     # Set up pos_weight
     pos_weight_tensor = torch.tensor(pos_weight).to(device)
@@ -157,12 +156,13 @@ def train(num_epochs: int,
     config_path = model_dir / 'config.json'
 
     # Initialise optimiser
-    opt = optim.AdamW(model.parameters(), lr=initial_lr, betas=betas)
+    opt = optim.AdamW(model.parameters(), lr=lr, betas=betas)
 
     # Initialise learning rate scheduler
-    scheduler = ReduceLROnPlateau(optimizer=opt,
-                                  factor=lr_factor,
-                                  patience=lr_patience)
+    scheduler = LinearLR(optimizer=opt,
+                         start_factor=1.,
+                         end_factor=1e-6,
+                         total_iters=100)
 
     # Initialise scorer
     scorer = tm.F1(num_classes=2, average='none').to(device)
@@ -307,19 +307,123 @@ def train(num_epochs: int,
                 json.dump(config, f)
 
         # Update learning rate
-        scheduler.step(val_loss)
+        scheduler.step()
+
+    # Final evaluation on the validation set
+    total_batches = 0
+    for _, _, blocks in tqdm(val_dataloader, desc='Evaluating'):
+        with torch.no_grad():
+
+            num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
+            if num_task_nodes == 0:
+                continue
+            else:
+                total_batches += 1
+
+            # Ensure that `blocks` are on the correct device
+            blocks = [block.to(device) for block in blocks]
+
+            # Get the input features and the output labels
+            input_feats = {n: f.float()
+                           for n, f in blocks[0].srcdata['feat'].items()}
+            output_labels = blocks[-1].dstdata['label'][task].to(device)
+
+            # Forward propagation
+            logits = model(blocks, input_feats)
+            logits = logits[task].squeeze(1)
+
+            # Compute validation loss
+            loss = F.binary_cross_entropy_with_logits(
+                input=logits,
+                target=output_labels.float(),
+                pos_weight=pos_weight_tensor
+            )
+
+            # Compute validation metrics
+            scores = scorer(logits.ge(0), output_labels)
+            misinformation_f1 = scores[0]
+            factual_f1 = scores[1]
+
+            # Store the validation metrics
+            val_loss += float(loss)
+            val_misinformation_f1 += float(misinformation_f1)
+            val_factual_f1 += float(factual_f1)
+
+    # Divide the validation metrics by the number of batches
+    val_loss /= total_batches
+    val_misinformation_f1 /= total_batches
+    val_factual_f1 /= total_batches
+
+    # Final evaluation on the test set
+    total_batches = 0
+    for _, _, blocks in tqdm(test_dataloader, desc='Evaluating'):
+        with torch.no_grad():
+
+            num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
+            if num_task_nodes == 0:
+                continue
+            else:
+                total_batches += 1
+
+            # Ensure that `blocks` are on the correct device
+            blocks = [block.to(device) for block in blocks]
+
+            # Get the input features and the output labels
+            input_feats = {n: f.float()
+                           for n, f in blocks[0].srcdata['feat'].items()}
+            output_labels = blocks[-1].dstdata['label'][task].to(device)
+
+            # Forward propagation
+            logits = model(blocks, input_feats)
+            logits = logits[task].squeeze(1)
+
+            # Compute validation loss
+            loss = F.binary_cross_entropy_with_logits(
+                input=logits,
+                target=output_labels.float(),
+                pos_weight=pos_weight_tensor
+            )
+
+            # Compute validation metrics
+            scores = scorer(logits.ge(0), output_labels)
+            misinformation_f1 = scores[0]
+            factual_f1 = scores[1]
+
+            # Store the validation metrics
+            test_loss += float(loss)
+            test_misinformation_f1 += float(misinformation_f1)
+            test_factual_f1 += float(factual_f1)
+
+    # Divide the validation metrics by the number of batches
+    test_loss /= total_batches
+    test_misinformation_f1 /= total_batches
+    test_factual_f1 /= total_batches
+
+    # Gather statistics to be logged
+    stats = [
+        ('val_loss', val_loss),
+        ('val_misinformation_f1', val_misinformation_f1),
+        ('val_factual_f1', val_factual_f1),
+        ('test_loss', test_loss),
+        ('test_misinformation_f1', test_misinformation_f1),
+        ('test_factual_f1', test_factual_f1),
+    ]
+
+    # Report statistics
+    log = 'Final evaluation\n'
+    for statistic, value in stats:
+        log += f'> {statistic}: {value}\n'
+    logger.info(log)
 
 
 if __name__ == '__main__':
-    config = dict(num_epochs=10_000,
-                  hidden_dim=1024,
+    config = dict(num_epochs=1000,
+                  hidden_dim=2048,
                   input_dropout=0.0,
                   dropout=0.0,
                   size='small',
                   task='claim',
                   initial_lr=2e-5,
-                  lr_factor=0.8,
-                  lr_patience=20,
                   betas=(0.8, 0.998),
                   pos_weight=1.)
     train(**config)
