@@ -86,11 +86,11 @@ def train(num_epochs: int,
 
     if graph_path.exists():
         # Load the graph
-        graph = load_graphs(str(graph_path))[0][0].to(device)
+        graph = load_graphs(str(graph_path))[0][0]
 
     else:
         # Load dataset
-        graph = load_mumin_graph(size=size).to(device)
+        graph = load_mumin_graph(size=size)
 
         # Ensure that Boolean tensors are not present in the graph, as saving
         # fails in that case
@@ -103,13 +103,8 @@ def train(num_epochs: int,
         save_graphs(str(graph_path), [graph])
 
     # Store labels and masks
-    #labels = graph.nodes[task].data['label']
     train_mask = graph.nodes[task].data['train_mask'].bool()
     val_mask = graph.nodes[task].data['val_mask'].bool()
-
-    # Store node features
-    #feats = {node_type: graph.nodes[node_type].data['feat'].float()
-    #         for node_type in graph.ntypes}
 
     # Initialise dictionary with feature dimensions
     dims = {ntype: graph.nodes[ntype].data['feat'].shape[-1]
@@ -137,14 +132,14 @@ def train(num_epochs: int,
     train_dataloader = NodeDataLoader(g=graph,
                                       nids=train_nids,
                                       block_sampler=sampler,
-                                      batch_size=1024,
+                                      batch_size=2048,
                                       shuffle=True,
                                       drop_last=False,
                                       num_workers=8)
     val_dataloader = NodeDataLoader(g=graph,
                                     nids=val_nids,
                                     block_sampler=sampler,
-                                    batch_size=1024,
+                                    batch_size=2048,
                                     shuffle=False,
                                     drop_last=False,
                                     num_workers=8)
@@ -169,7 +164,7 @@ def train(num_epochs: int,
                                   patience=lr_patience)
 
     # Initialise scorer
-    scorer = tm.F1(num_classes=2, average='none')
+    scorer = tm.F1(num_classes=2, average='none').to(device)
 
     # Initialise best validation loss
     best_val_loss = float('inf')
@@ -196,7 +191,7 @@ def train(num_epochs: int,
             # Get the input features and the output labels
             input_feats = {n: feat.float()
                            for n, feat in blocks[0].srcdata['feat'].items()}
-            output_labels = blocks[-1].dstdata['label'][task].float()
+            output_labels = blocks[-1].dstdata['label'][task].to(device)
 
             # Forward propagation
             logits = model(blocks, input_feats)
@@ -205,12 +200,12 @@ def train(num_epochs: int,
             # Compute loss
             loss = F.binary_cross_entropy_with_logits(
                 input=logits,
-                target=output_labels,
+                target=output_labels.float(),
                 pos_weight=pos_weight_tensor
             )
 
             # Compute training metrics
-            scores = scorer(logits.ge(0), output_labels.int())
+            scores = scorer(logits.ge(0), output_labels)
             misinformation_f1 = scores[0]
             factual_f1 = scores[1]
 
@@ -240,7 +235,7 @@ def train(num_epochs: int,
                 # Get the input features and the output labels
                 input_feats = {n: f.float()
                                for n, f in blocks[0].srcdata['feat'].items()}
-                output_labels = blocks[-1].dstdata['label'][task].float()
+                output_labels = blocks[-1].dstdata['label'][task].to(device)
 
                 # Forward propagation
                 logits = model(blocks, input_feats)
@@ -249,12 +244,12 @@ def train(num_epochs: int,
                 # Compute validation loss
                 loss = F.binary_cross_entropy_with_logits(
                     input=logits,
-                    target=output_labels,
+                    target=output_labels.float(),
                     pos_weight=pos_weight_tensor
                 )
 
                 # Compute validation metrics
-                scores = scorer(logits.ge(0), output_labels.int())
+                scores = scorer(logits.ge(0), output_labels)
                 misinformation_f1 = scores[0]
                 factual_f1 = scores[1]
 
@@ -300,13 +295,14 @@ def train(num_epochs: int,
 
 if __name__ == '__main__':
     config = dict(num_epochs=10_000,
-                  hidden_dim=768,
+                  hidden_dim=1024,
                   input_dropout=0.0,
                   dropout=0.0,
                   size='small',
                   task='claim',
+                  initial_lr=2e-5,
                   lr_factor=0.8,
-                  lr_patience=10,
+                  lr_patience=20,
                   betas=(0.8, 0.998),
                   pos_weight=10.)
     train(**config)
