@@ -84,7 +84,7 @@ def train(num_epochs: int,
 
     if graph_path.exists():
         # Load the graph
-        graph = load_graphs(str(graph_path))[0][0]
+        graph = load_graphs(str(graph_path))[0][0].to(device)
 
     else:
         # Load dataset
