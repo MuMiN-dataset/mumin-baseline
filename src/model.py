@@ -35,8 +35,8 @@ class HeteroGraphSAGE(nn.Module):
             aggregate='sum')
 
     def forward(self, blocks, input_dict: dict) -> dict:
-        h_dict = self.conv1(blocks[0], (input_dict, input_dict))
-        h_dict = self.conv2(blocks[1], (h_dict, h_dict))
+        h_dict = self.conv1(blocks[0], input_dict)
+        h_dict = self.conv2(blocks[1], h_dict)
         return h_dict
 
 

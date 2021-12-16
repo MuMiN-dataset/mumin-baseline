@@ -10,7 +10,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import torchmetrics as tm
 from dgl.data.utils import save_graphs, load_graphs
-from dgl.dataloading.neighbor import MultiLayerNeighborSampler
+from dgl.dataloading.neighbor import MultiLayerFullNeighborSampler
 from dgl.dataloading.pytorch import NodeDataLoader
 import dgl
 import logging
@@ -126,11 +126,12 @@ def train(num_epochs: int,
 
     # Set up the training and validation node IDs, being the node indexes where
     # `train_mask` and `val_mask` is True, respectively
-    train_nids = torch.arange(graph.num_nodes(task))[train_mask].long()
-    val_nids = torch.arange(graph.num_nodes(task))[val_mask].long()
+    node_enum = torch.arange(graph.num_nodes(task))
+    train_nids = {task: node_enum[train_mask].int()}
+    val_nids = {task: node_enum[val_mask].int()}
 
     # Set up the sampler
-    sampler = MultiLayerNeighborSampler(fanouts=10, replace=False)
+    sampler = MultiLayerFullNeighborSampler(n_layers=2)
 
     # Set up the dataloaders
     train_dataloader = NodeDataLoader(g=graph,
@@ -193,8 +194,9 @@ def train(num_epochs: int,
             blocks = [block.to(device) for block in blocks]
 
             # Get the input features and the output labels
-            input_feats = blocks[0].srcdata
-            output_labels = blocks[-1].dstdata[task].float()
+            input_feats = {n: feat.float()
+                           for n, feat in blocks[0].srcdata['feat'].items()}
+            output_labels = blocks[-1].dstdata['label'][task].float()
 
             # Forward propagation
             logits = model(blocks, input_feats)
@@ -208,9 +210,9 @@ def train(num_epochs: int,
             )
 
             # Compute training metrics
-            train_scores = scorer(logits.ge(0), output_labels)
-            train_misinformation_f1 = train_scores[0]
-            train_factual_f1 = train_scores[1]
+            scores = scorer(logits.ge(0), output_labels.int())
+            misinformation_f1 = scores[0]
+            factual_f1 = scores[1]
 
             # Backward propagation
             loss.backward()
@@ -220,8 +222,8 @@ def train(num_epochs: int,
 
             # Store the training metrics
             train_loss += float(loss)
-            train_misinformation_f1 += float(train_misinformation_f1)
-            train_factual_f1 += float(train_factual_f1)
+            train_misinformation_f1 += float(misinformation_f1)
+            train_factual_f1 += float(factual_f1)
 
         # Divide the training metrics by the number of batches
         train_loss /= len(train_dataloader)
@@ -236,29 +238,30 @@ def train(num_epochs: int,
                 blocks = [block.to(device) for block in blocks]
 
                 # Get the input features and the output labels
-                input_feats = blocks[0].srcdata
-                output_labels = blocks[-1].dstdata[task].float()
+                input_feats = {n: f.float()
+                               for n, f in blocks[0].srcdata['feat'].items()}
+                output_labels = blocks[-1].dstdata['label'][task].float()
 
                 # Forward propagation
                 logits = model(blocks, input_feats)
                 logits = logits[task].squeeze(1)
 
                 # Compute validation loss
-                val_loss = F.binary_cross_entropy_with_logits(
+                loss = F.binary_cross_entropy_with_logits(
                     input=logits,
                     target=output_labels,
                     pos_weight=pos_weight_tensor
                 )
 
                 # Compute validation metrics
-                val_scores = scorer(logits.ge(0), output_labels)
-                val_misinformation_f1 = val_scores[0]
-                val_factual_f1 = val_scores[1]
+                scores = scorer(logits.ge(0), output_labels.int())
+                misinformation_f1 = scores[0]
+                factual_f1 = scores[1]
 
                 # Store the validation metrics
-                val_loss += float(val_loss)
-                val_misinformation_f1 += float(val_misinformation_f1)
-                val_factual_f1 += float(val_factual_f1)
+                val_loss += float(loss)
+                val_misinformation_f1 += float(misinformation_f1)
+                val_factual_f1 += float(factual_f1)
 
         # Divide the validation metrics by the number of batches
         val_loss /= len(val_dataloader)
