@@ -43,18 +43,18 @@ def main(model_id: str) -> Dict[str, float]:
                                                             tgt='claim_idx')),
                          on='tweet_idx')
                   .merge(claim_df, left_on='claim_idx', right_index=True))
-    image_df = df[['pixels', 'verdict', 'train_mask', 'val_mask', 'test_mask']]
+    image_df = df[['pixels', 'label', 'train_mask', 'val_mask', 'test_mask']]
     train_df = image_df.query('train_mask == True')
     val_df = image_df.query('val_mask == True')
     test_df = image_df.query('test_mask == True')
 
     # Convert the dataset to the HuggingFace format
     train = Dataset.from_dict(dict(pixels=train_df.pixels.tolist(),
-                                   orig_label=train_df.verdict.tolist()))
+                                   orig_label=train_df.label.tolist()))
     val = Dataset.from_dict(dict(pixels=val_df.pixels.tolist(),
-                                 orig_label=val_df.verdict.tolist()))
+                                 orig_label=val_df.label.tolist()))
     test = Dataset.from_dict(dict(pixels=test_df.pixels.tolist(),
-                                  orig_label=test_df.verdict.tolist()))
+                                  orig_label=test_df.label.tolist()))
 
     # Load the feature extractor and model
     config_dict = dict(num_labels=2,
