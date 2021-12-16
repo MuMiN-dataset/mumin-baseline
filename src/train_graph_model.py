@@ -117,6 +117,7 @@ def train(num_epochs: int,
     node_enum = torch.arange(graph.num_nodes(task))
     train_nids = {task: node_enum[train_mask].int()}
     val_nids = {task: node_enum[val_mask].int()}
+    test_nids = {task: node_enum[test_mask].int()}
 
     # Set up the sampler
     sampler = MultiLayerFullNeighborSampler(n_layers=2)
