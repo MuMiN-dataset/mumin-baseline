@@ -8,8 +8,7 @@
                 "eval_misinfo_f1": 0.9460659898477157,
                 "eval_runtime": 15.0625,
                 "eval_samples_per_second": 114.987,
-                "eval_steps_per_second": 28.747,
-                "epoch": 100.0
+                "eval_steps_per_second": 28.747, "epoch": 100.0
              },
     "val": {
                 "eval_loss": 0.43309396505355835,
@@ -92,5 +91,37 @@
                "eval_samples_per_second": 93.827,
                "eval_steps_per_second": 46.913,
                "epoch": 100.0
+            }
+}
+{
+    "size": "small",
+    "type": "thread",
+    "model_id": "sentence-transformers/LaBSE",
+    "train": {
+              "eval_loss": 0.0032979489769786596,
+              "eval_factual_f1": 0.9984202211690364,
+              "eval_misinfo_f1": 0.9998507685420087,
+              "eval_runtime": 12.7887,
+              "eval_samples_per_second": 286.737,
+              "eval_steps_per_second": 35.891,
+              "epoch": 999.99
+             },
+    "val": {
+              "eval_loss": 1.4637202024459839,
+              "eval_factual_f1": 0.09302325581395347,
+              "eval_misinfo_f1": 0.9696024941543259,
+              "eval_runtime": 2.394,
+              "eval_samples_per_second": 276.937,
+              "eval_steps_per_second": 34.669,
+              "epoch": 999.99
+           },
+    "test": {
+              "eval_loss": 1.9602320194244385,
+              "eval_factual_f1": 0.045454545454545456,
+              "eval_misinfo_f1": 0.9611111111111111,
+              "eval_runtime": 2.4619,
+              "eval_samples_per_second": 228.283,
+              "eval_steps_per_second": 28.84,
+              "epoch": 999.99
             }
 }
