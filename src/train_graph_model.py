@@ -162,7 +162,7 @@ def train(num_epochs: int,
     # Initialise learning rate scheduler
     scheduler = LinearLR(optimizer=opt,
                          start_factor=1.,
-                         end_factor=1e-6,
+                         end_factor=1e-6 / lr,
                          total_iters=100)
 
     # Initialise scorer
