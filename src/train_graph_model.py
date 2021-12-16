@@ -423,7 +423,7 @@ if __name__ == '__main__':
                   dropout=0.0,
                   size='small',
                   task='claim',
-                  initial_lr=2e-5,
+                  lr=2e-5,
                   betas=(0.8, 0.998),
                   pos_weight=1.)
     train(**config)
