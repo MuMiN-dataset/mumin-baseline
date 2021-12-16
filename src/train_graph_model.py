@@ -17,6 +17,7 @@ import logging
 import json
 from typing import Tuple
 import datetime as dt
+from tqdm.auto import tqdm
 
 
 logger = logging.getLogger(__name__)
@@ -122,8 +123,12 @@ def train(num_epochs: int,
     # Set up the training and validation node IDs, being the node indexes where
     # `train_mask` and `val_mask` is True, respectively
     node_enum = torch.arange(graph.num_nodes(task))
-    train_nids = {task: node_enum[train_mask].int()}
-    val_nids = {task: node_enum[val_mask].int()}
+    train_nids = {ntype: torch.arange(graph.num_nodes(ntype)).int()
+                  for ntype in graph.ntypes}
+    train_nids[task] = train_nids[task][train_mask]
+    val_nids = {ntype: torch.arange(graph.num_nodes(ntype)).int()
+                for ntype in graph.ntypes}
+    val_nids[task] = val_nids[task][val_mask]
 
     # Set up the sampler
     sampler = MultiLayerFullNeighborSampler(n_layers=2)
@@ -132,17 +137,17 @@ def train(num_epochs: int,
     train_dataloader = NodeDataLoader(g=graph,
                                       nids=train_nids,
                                       block_sampler=sampler,
-                                      batch_size=2048,
+                                      batch_size=1024,
                                       shuffle=True,
                                       drop_last=False,
-                                      num_workers=8)
+                                      num_workers=4)
     val_dataloader = NodeDataLoader(g=graph,
                                     nids=val_nids,
                                     block_sampler=sampler,
                                     batch_size=2048,
                                     shuffle=False,
                                     drop_last=False,
-                                    num_workers=8)
+                                    num_workers=4)
 
     # Set up pos_weight
     pos_weight_tensor = torch.tensor(pos_weight).to(device)
@@ -180,7 +185,10 @@ def train(num_epochs: int,
         val_factual_f1 = 0.0
 
         # Train model
-        for _, _, blocks in train_dataloader:
+        for _, _, blocks in tqdm(train_dataloader, desc='Training'):
+
+            if blocks[-1].dstdata['feat'][task].shape[0] == 0:
+                continue
 
             # Reset the gradients
             opt.zero_grad()
@@ -195,6 +203,8 @@ def train(num_epochs: int,
 
             # Forward propagation
             logits = model(blocks, input_feats)
+            if task not in logits.keys():
+                breakpoint()
             logits = logits[task].squeeze(1)
 
             # Compute loss
@@ -226,7 +236,7 @@ def train(num_epochs: int,
         train_factual_f1 /= len(train_dataloader)
 
         # Evaluate model
-        for _, _, blocks in val_dataloader:
+        for _, _, blocks in tqdm(val_dataloader, desc='Evaluating'):
             with torch.no_grad():
 
                 # Ensure that `blocks` are on the correct device
