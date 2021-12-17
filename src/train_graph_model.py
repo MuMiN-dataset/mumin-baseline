@@ -97,6 +97,8 @@ def train(num_epochs: int,
         # Save graph to disk
         save_graphs(str(graph_path), [graph])
 
+    breakpoint()
+
     # Store labels and masks
     train_mask = graph.nodes[task].data['train_mask'].bool()
     val_mask = graph.nodes[task].data['val_mask'].bool()
