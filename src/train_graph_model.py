@@ -123,7 +123,7 @@ def train(num_epochs: int,
     test_nids = {task: node_enum[test_mask].int()}
 
     # Set up the sampler
-    sampler = MultiLayerNeighborSampler([100, 100, 100], replace=False)
+    sampler = MultiLayerNeighborSampler([10, 10, 10], replace=False)
 
     # Set up the dataloaders
     train_dataloader = NodeDataLoader(g=graph,
@@ -429,8 +429,8 @@ if __name__ == '__main__':
     config = dict(num_epochs=10_000,
                   batch_size=32,
                   hidden_dim=1024,
-                  input_dropout=0.0,
-                  dropout=0.0,
+                  input_dropout=0.5,
+                  dropout=0.5,
                   size='small',
                   task='claim',
                   lr=2e-5,
