@@ -58,6 +58,7 @@ class SAGEConv(nn.Module):
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
+        self.batch_norm_src = nn.BatchNorm1d(in_feats)
         self.proj_src = nn.Linear(self._in_src_feats, hidden_feats)
         self.proj_dst = nn.Linear(self._in_dst_feats, out_feats)
         self.fc = nn.Linear(self._in_src_feats + self._in_dst_feats, out_feats)
@@ -67,7 +68,7 @@ class SAGEConv(nn.Module):
     def _message(self, edges):
         breakpoint()
         src_feats = edges.src['h']
-        src_feats = F.batch_norm(src_feats, normalized_shape=src_feats.shape)
+        src_feats = self.batch_norm_src(src_feats)
         src_feats = self.proj_src(src_feats)
         src_feats = F.gelu(src_feats)
         return {'m': src_feats}
