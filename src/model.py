@@ -70,7 +70,6 @@ class SAGEConv(nn.Module):
     @staticmethod
     def _reduce(nodes):
         messages = nodes.mailbox['m']
-        breakpoint()
         return {'neigh': messages.max(dim=1)[0]}
 
     def forward(self, graph, feat):
