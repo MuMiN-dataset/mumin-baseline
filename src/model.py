@@ -62,12 +62,17 @@ class SAGEConv(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.activation = (lambda x: x) if activation is None else activation
 
+    @staticmethod
+    def _reduce(nodes):
+        messages = nodes.mailbox['m']
+        return {'neigh': messages.max(dim=1)}
+
     def forward(self, graph, feat):
         h_src, h_dst = expand_as_pair(feat)
 
         graph.srcdata['h'] = h_src
         graph.update_all(message_func=dglfn.copy_u('h', 'm'),
-                         reduce_func=dglfn.max('m', 'neigh'))
+                         reduce_func=self._reduce)
         h_neigh = graph.dstdata['neigh']
 
         h = torch.cat((h_dst, h_neigh), dim=-1)
