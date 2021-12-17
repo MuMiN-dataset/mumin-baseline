@@ -30,6 +30,13 @@ class HeteroGraphSAGE(nn.Module):
             aggregate='sum')
 
         self.conv2 = HeteroGraphConv(
+            {rel: SAGEConv(in_feats=feats[1],
+                           out_feats=feats[1],
+                           dropout=dropout)
+             for rel, feats in feat_dict.items()},
+            aggregate='sum')
+
+        self.conv3 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1], out_feats=1, dropout=dropout)
              for rel, feats in feat_dict.items()},
             aggregate='sum')
@@ -37,6 +44,7 @@ class HeteroGraphSAGE(nn.Module):
     def forward(self, blocks, input_dict: dict) -> dict:
         h_dict = self.conv1(blocks[0], input_dict)
         h_dict = self.conv2(blocks[1], h_dict)
+        h_dict = self.conv3(blocks[2], h_dict)
         return h_dict
 
 
@@ -58,7 +66,7 @@ class SAGEConv(nn.Module):
         h_src, h_dst = expand_as_pair(feat)
 
         graph.srcdata['h'] = h_src
-        graph.update_all(dglfn.copy_u('h', 'm'), dglfn.mean('m', 'neigh'))
+        graph.update_all(dglfn.copy_u('h', 'm'), dglfn.sum('m', 'neigh'))
         h_neigh = graph.dstdata['neigh']
 
         h = torch.cat((h_dst, h_neigh), dim=-1)
