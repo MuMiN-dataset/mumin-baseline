@@ -10,7 +10,7 @@ import torch.optim as optim
 from torch.optim.lr_scheduler import LinearLR
 import torchmetrics as tm
 from dgl.data.utils import save_graphs, load_graphs
-from dgl.dataloading.neighbor import MultiLayerFullNeighborSampler
+from dgl.dataloading.neighbor import MultiLayerNeighborSampler
 from dgl.dataloading.pytorch import NodeDataLoader
 import dgl
 import logging
@@ -24,37 +24,40 @@ logger = logging.getLogger(__name__)
 
 
 def train(num_epochs: int,
+          batch_size: int,
           hidden_dim: int,
-          input_dropout: float = 0.0,
-          dropout: float = 0.0,
-          size: str = 'small',
-          task: str = 'claim',
-          lr: float = 5e-5,
-          betas: Tuple[float, float] = (0.8, 0.998),
-          pos_weight: float = 1.):
+          input_dropout: float,
+          dropout: float,
+          size: str,
+          task: str,
+          lr: float,
+          betas: Tuple[float, float],
+          pos_weight: float):
     '''Train a heterogeneous GraphConv model on the MuMiN dataset.
 
     Args:
         num_epochs (int):
             The number of epochs to train for.
+        batch_size (int):
+            The batch size.
         hidden_dim (int):
             The dimension of the hidden layer.
-        input_dropout (float, optional):
-            The amount of dropout of the inputs. Defaults to 0.0.
-        dropout (float, optional):
-            The amount of dropout of the hidden layers. Defaults to 0.0.
-        size (str, optional):
-            The size of the dataset to use. Defaults to 'small'.
-        task (str, optional):
+        input_dropout (float):
+            The amount of dropout of the inputs.
+        dropout (float):
+            The amount of dropout of the hidden layers.
+        size (str):
+            The size of the dataset to use.
+        task (str):
             The task to consider, which can be either 'tweet' or 'claim',
             corresponding to doing thread-level or claim-level node
-            classification. Defaults to 'claim'.
-        lr (float, optional):
-            The learning rate. Defaults to 5e-5.
-        betas (Tuple[float, float], optional):
-            The coefficients for the Adam optimizer. Defaults to (0.8, 0.998).
-        pos_weight (float, optional):
-            The weight to give to the positive examples. Defaults to 1.0.
+            classification.
+        lr (float):
+            The learning rate.
+        betas (Tuple[float, float]):
+            The coefficients for the Adam optimizer.
+        pos_weight (float):
+            The weight to give to the positive examples.
     '''
     # Set random seeds
     torch.manual_seed(4242)
@@ -120,27 +123,27 @@ def train(num_epochs: int,
     test_nids = {task: node_enum[test_mask].int()}
 
     # Set up the sampler
-    sampler = MultiLayerFullNeighborSampler(n_layers=2)
+    sampler = MultiLayerNeighborSampler([100, 100, 100], replace=False)
 
     # Set up the dataloaders
     train_dataloader = NodeDataLoader(g=graph,
                                       nids=train_nids,
                                       block_sampler=sampler,
-                                      batch_size=4096,
+                                      batch_size=batch_size,
                                       shuffle=True,
                                       drop_last=False,
                                       num_workers=4)
     val_dataloader = NodeDataLoader(g=graph,
                                     nids=val_nids,
                                     block_sampler=sampler,
-                                    batch_size=4096,
+                                    batch_size=batch_size,
                                     shuffle=False,
                                     drop_last=False,
                                     num_workers=4)
     test_dataloader = NodeDataLoader(g=graph,
                                      nids=test_nids,
                                      block_sampler=sampler,
-                                     batch_size=4096,
+                                     batch_size=batch_size,
                                      shuffle=False,
                                      drop_last=False,
                                      num_workers=4)
@@ -162,8 +165,8 @@ def train(num_epochs: int,
     # Initialise learning rate scheduler
     scheduler = LinearLR(optimizer=opt,
                          start_factor=1.,
-                         end_factor=1e-6 / lr,
-                         total_iters=200)
+                         end_factor=1e-7 / lr,
+                         total_iters=100)
 
     # Initialise scorer
     scorer = tm.F1(num_classes=2, average='none').to(device)
@@ -185,14 +188,9 @@ def train(num_epochs: int,
         val_factual_f1 = 0.0
 
         # Train model
-        total_batches = 0
-        for _, _, blocks in train_dataloader:
-
-            num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
-            if num_task_nodes == 0:
-                continue
-            else:
-                total_batches += 1
+        for _, _, blocks in tqdm(train_dataloader,
+                                 desc=f'Epoch {epoch}',
+                                 leave=False):
 
             # Reset the gradients
             opt.zero_grad()
@@ -235,20 +233,13 @@ def train(num_epochs: int,
             train_factual_f1 += float(factual_f1)
 
         # Divide the training metrics by the number of batches
-        train_loss /= total_batches
-        train_misinformation_f1 /= total_batches
-        train_factual_f1 /= total_batches
+        train_loss /= len(train_dataloader)
+        train_misinformation_f1 /= len(train_dataloader)
+        train_factual_f1 /= len(train_dataloader)
 
         # Evaluate model
-        total_batches = 0
         for _, _, blocks in val_dataloader:
             with torch.no_grad():
-
-                num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
-                if num_task_nodes == 0:
-                    continue
-                else:
-                    total_batches += 1
 
                 # Ensure that `blocks` are on the correct device
                 blocks = [block.to(device) for block in blocks]
@@ -280,9 +271,9 @@ def train(num_epochs: int,
                 val_factual_f1 += float(factual_f1)
 
         # Divide the validation metrics by the number of batches
-        val_loss /= total_batches
-        val_misinformation_f1 /= total_batches
-        val_factual_f1 /= total_batches
+        val_loss /= len(val_dataloader)
+        val_misinformation_f1 /= len(val_dataloader)
+        val_factual_f1 /= len(val_dataloader)
 
         # Gather statistics to be logged
         stats = [
@@ -328,15 +319,8 @@ def train(num_epochs: int,
     model.load_state_dict(torch.load(str(model_path)))
 
     # Final evaluation on the validation set
-    total_batches = 0
     for _, _, blocks in tqdm(val_dataloader, desc='Evaluating'):
         with torch.no_grad():
-
-            num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
-            if num_task_nodes == 0:
-                continue
-            else:
-                total_batches += 1
 
             # Ensure that `blocks` are on the correct device
             blocks = [block.to(device) for block in blocks]
@@ -368,20 +352,13 @@ def train(num_epochs: int,
             val_factual_f1 += float(factual_f1)
 
     # Divide the validation metrics by the number of batches
-    val_loss /= total_batches
-    val_misinformation_f1 /= total_batches
-    val_factual_f1 /= total_batches
+    val_loss /= len(val_dataloader)
+    val_misinformation_f1 /= len(val_dataloader)
+    val_factual_f1 /= len(val_dataloader)
 
     # Final evaluation on the test set
-    total_batches = 0
     for _, _, blocks in tqdm(test_dataloader, desc='Evaluating'):
         with torch.no_grad():
-
-            num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
-            if num_task_nodes == 0:
-                continue
-            else:
-                total_batches += 1
 
             # Ensure that `blocks` are on the correct device
             blocks = [block.to(device) for block in blocks]
@@ -413,9 +390,9 @@ def train(num_epochs: int,
             test_factual_f1 += float(factual_f1)
 
     # Divide the validation metrics by the number of batches
-    test_loss /= total_batches
-    test_misinformation_f1 /= total_batches
-    test_factual_f1 /= total_batches
+    test_loss /= len(test_dataloader)
+    test_misinformation_f1 /= len(test_dataloader)
+    test_factual_f1 /= len(test_dataloader)
 
     # Gather statistics to be logged
     stats = [
@@ -436,12 +413,13 @@ def train(num_epochs: int,
 
 if __name__ == '__main__':
     config = dict(num_epochs=10_000,
-                  hidden_dim=2048,
+                  batch_size=32,
+                  hidden_dim=1024,
                   input_dropout=0.0,
                   dropout=0.0,
                   size='small',
                   task='claim',
                   lr=2e-5,
-                  betas=(0.8, 0.998),
+                  betas=(0.9, 0.999),
                   pos_weight=1.)
     train(**config)
