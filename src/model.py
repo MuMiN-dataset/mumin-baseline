@@ -77,23 +77,19 @@ class SAGEConv(nn.Module):
 
     def _apply_node(self, nodes):
         breakpoint()
-        h_src = nodes.data['h']
+        h_dst = nodes.data['h']
         h_neigh = nodes.data['neigh']
-        h = torch.cat((h_src, h_neigh), dim=-1)
+        h = torch.cat((h_dst, h_neigh), dim=-1)
         h = self.dropout(h)
         rst = self.fc(h)
-        return self.proj_dst(h_src) + self.activation(rst)
+        return {'h': self.proj_dst(h_dst) + self.activation(rst)}
 
     def forward(self, graph, feat):
         h_src, h_dst = expand_as_pair(feat)
 
         graph.srcdata['h'] = h_src
+        graph.dstdata['h'] = h_dst
         graph.update_all(message_func=self._message,
                          reduce_func=self._reduce,
                          apply_node_func=self._apply_node)
-        h_neigh = graph.dstdata['neigh']
-
-        h = torch.cat((h_dst, h_neigh), dim=-1)
-        h = self.dropout(h)
-        rst = self.fc(h)
-        return self.proj_dst(h_dst) + self.activation(rst)
+        return graph.dstdata['h']
