@@ -267,8 +267,10 @@ def train(num_epochs: int,
 
                 # Store the validation metrics
                 val_loss += float(loss)
-                val_misinformation_f1 += float(misinformation_f1)
-                val_factual_f1 += float(factual_f1)
+                if misinformation_f1 == misinformation_f1:
+                    val_misinformation_f1 += float(misinformation_f1)
+                if factual_f1 == factual_f1:
+                    val_factual_f1 += float(factual_f1)
 
         # Divide the validation metrics by the number of batches
         val_loss /= len(val_dataloader)
@@ -318,6 +320,14 @@ def train(num_epochs: int,
     # Load best model
     model.load_state_dict(torch.load(str(model_path)))
 
+    # Reset metrics
+    val_loss = 0.0
+    val_misinformation_f1 = 0.0
+    val_factual_f1 = 0.0
+    test_loss = 0.0
+    test_misinformation_f1 = 0.0
+    test_factual_f1 = 0.0
+
     # Final evaluation on the validation set
     for _, _, blocks in tqdm(val_dataloader, desc='Evaluating'):
         with torch.no_grad():
@@ -348,8 +358,10 @@ def train(num_epochs: int,
 
             # Store the validation metrics
             val_loss += float(loss)
-            val_misinformation_f1 += float(misinformation_f1)
-            val_factual_f1 += float(factual_f1)
+            if misinformation_f1 == misinformation_f1:
+                val_misinformation_f1 += float(misinformation_f1)
+            if factual_f1 == factual_f1:
+                val_factual_f1 += float(factual_f1)
 
     # Divide the validation metrics by the number of batches
     val_loss /= len(val_dataloader)
@@ -384,10 +396,12 @@ def train(num_epochs: int,
             misinformation_f1 = scores[0]
             factual_f1 = scores[1]
 
-            # Store the validation metrics
+            # Store the test metrics
             test_loss += float(loss)
-            test_misinformation_f1 += float(misinformation_f1)
-            test_factual_f1 += float(factual_f1)
+            if misinformation_f1 == misinformation_f1:
+                test_misinformation_f1 += float(misinformation_f1)
+            if factual_f1 == factual_f1:
+                test_factual_f1 += float(factual_f1)
 
     # Divide the validation metrics by the number of batches
     test_loss /= len(test_dataloader)
