@@ -228,10 +228,11 @@ def train(num_epochs: int,
             # Store the training metrics
             train_loss += float(loss)
             train_misinformation_f1 += float(misinformation_f1)
+            if factual_f1 != factual_f1:
+                breakpoint()
             train_factual_f1 += float(factual_f1)
 
         # Divide the training metrics by the number of batches
-        breakpoint()
         train_loss /= len(train_dataloader)
         train_misinformation_f1 /= len(train_dataloader)
         train_factual_f1 /= len(train_dataloader)
