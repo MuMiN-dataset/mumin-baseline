@@ -58,7 +58,7 @@ class SAGEConv(nn.Module):
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
-        self.batch_norm_src = nn.BatchNorm1d(in_feats)
+        self.batch_norm_src = nn.BatchNorm1d(self._in_src_feats)
         self.proj_src = nn.Linear(self._in_src_feats, hidden_feats)
         self.proj_dst = nn.Linear(self._in_dst_feats, out_feats)
         self.fc = nn.Linear(self._in_src_feats + self._in_dst_feats, out_feats)
