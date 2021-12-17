@@ -70,6 +70,7 @@ class SAGEConv(nn.Module):
     def _message(self, edges):
         src_feats = edges.src['h']
         src_feats = self.norm_src(src_feats)
+        src_feats = self.dropout(src_feats)
         src_feats = self.proj_src(src_feats)
         src_feats = F.gelu(src_feats)
         return {'m': src_feats}
