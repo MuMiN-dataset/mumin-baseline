@@ -67,7 +67,7 @@ class SAGEConv(nn.Module):
     def _message(self, edges):
         breakpoint()
         src_feats = edges.src['h']
-        src_feats = F.layer_norm(src_feats, normalized_shape=src_feats.shape)
+        src_feats = F.batch_norm(src_feats, normalized_shape=src_feats.shape)
         src_feats = self.proj_src(src_feats)
         src_feats = F.gelu(src_feats)
         return {'m': src_feats}
