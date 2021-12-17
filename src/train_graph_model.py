@@ -163,13 +163,13 @@ def train(num_epochs: int,
     scheduler = LinearLR(optimizer=opt,
                          start_factor=1.,
                          end_factor=1e-6 / lr,
-                         total_iters=100)
+                         total_iters=200)
 
     # Initialise scorer
     scorer = tm.F1(num_classes=2, average='none').to(device)
 
-    # Initialise best validation loss
-    best_val_loss = float('inf')
+    # Initialise best score
+    best_factual_f1 = 0.0
 
     for epoch in range(num_epochs):
 
@@ -301,8 +301,8 @@ def train(num_epochs: int,
         logger.info(log)
 
         # Save model and config
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
+        if val_factual_f1 > best_factual_f1:
+            best_factual_f1 = val_factual_f1
             torch.save(model.state_dict(), str(model_path))
             with config_path.open('w') as f:
                 json.dump(config, f)
@@ -311,7 +311,7 @@ def train(num_epochs: int,
         scheduler.step()
 
     # Load best model
-    model.load_state_dict(str(model_path))
+    model.load_state_dict(torch.load(str(model_path)))
 
     # Final evaluation on the validation set
     total_batches = 0
@@ -421,7 +421,7 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    config = dict(num_epochs=1000,
+    config = dict(num_epochs=10_000,
                   hidden_dim=2048,
                   input_dropout=0.0,
                   dropout=0.0,
