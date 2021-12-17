@@ -76,8 +76,7 @@ class SAGEConv(nn.Module):
         h_src, h_dst = expand_as_pair(feat)
 
         graph.srcdata['h'] = h_src
-        graph.update_all(message_func=dglfn.copy_u('h', 'm'),
-                         reduce_func=self._reduce)
+        graph.update_all(message_func=self._message, reduce_func=self._reduce)
         h_neigh = graph.dstdata['neigh']
 
         h = torch.cat((h_dst, h_neigh), dim=-1)
