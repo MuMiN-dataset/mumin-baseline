@@ -46,7 +46,6 @@ class HeteroGraphSAGE(nn.Module):
         h_dict = self.conv1(blocks[0], input_dict)
         h_dict = self.conv2(blocks[1], h_dict)
         h_dict = self.conv3(blocks[2], h_dict)
-        breakpoint()
         return h_dict
 
 
