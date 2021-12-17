@@ -63,6 +63,11 @@ class SAGEConv(nn.Module):
         self.activation = (lambda x: x) if activation is None else activation
 
     @staticmethod
+    def _message(edges):
+        breakpoint()
+        return {'m': edges.src['h']}
+
+    @staticmethod
     def _reduce(nodes):
         messages = nodes.mailbox['m']
         breakpoint()
@@ -72,7 +77,6 @@ class SAGEConv(nn.Module):
         h_src, h_dst = expand_as_pair(feat)
 
         graph.srcdata['h'] = h_src
-        breakpoint()
         graph.update_all(message_func=dglfn.copy_u('h', 'm'),
                          reduce_func=self._reduce)
         h_neigh = graph.dstdata['neigh']
