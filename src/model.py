@@ -27,19 +27,19 @@ class HeteroGraphSAGE(nn.Module):
                            activation=F.relu,
                            dropout=input_dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='sum')
+            aggregate='max')
 
         self.conv2 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
                            out_feats=feats[1],
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='sum')
+            aggregate='max')
 
         self.conv3 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1], out_feats=1, dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='sum')
+            aggregate='max')
 
     def forward(self, blocks, input_dict: dict) -> dict:
         h_dict = self.conv1(blocks[0], input_dict)
@@ -66,7 +66,8 @@ class SAGEConv(nn.Module):
         h_src, h_dst = expand_as_pair(feat)
 
         graph.srcdata['h'] = h_src
-        graph.update_all(dglfn.copy_u('h', 'm'), dglfn.sum('m', 'neigh'))
+        graph.update_all(message_func=dglfn.copy_u('h', 'm'),
+                         reduce_func=dglfn.max('m', 'neigh'))
         h_neigh = graph.dstdata['neigh']
 
         h = torch.cat((h_dst, h_neigh), dim=-1)
