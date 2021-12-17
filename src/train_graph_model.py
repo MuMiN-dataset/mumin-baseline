@@ -206,7 +206,6 @@ def train(num_epochs: int,
             # Forward propagation
             logits = model(blocks, input_feats)
             logits = logits[task].squeeze(1)
-            breakpoint()
 
             # Compute loss
             loss = F.binary_cross_entropy_with_logits(
@@ -232,6 +231,7 @@ def train(num_epochs: int,
             train_factual_f1 += float(factual_f1)
 
         # Divide the training metrics by the number of batches
+        breakpoint()
         train_loss /= len(train_dataloader)
         train_misinformation_f1 /= len(train_dataloader)
         train_factual_f1 /= len(train_dataloader)
