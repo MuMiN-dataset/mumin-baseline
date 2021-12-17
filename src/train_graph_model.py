@@ -171,7 +171,10 @@ def train(num_epochs: int,
     # Initialise best score
     best_factual_f1 = 0.0
 
-    for epoch in range(num_epochs):
+    # Initialise progress bar
+    epoch_pbar = tqdm(range(num_epochs), desc='Training')
+
+    for epoch in epoch_pbar:
 
         # Reset metrics
         train_loss = 0.0
@@ -183,7 +186,7 @@ def train(num_epochs: int,
 
         # Train model
         total_batches = 0
-        for _, _, blocks in tqdm(train_dataloader, desc='Training'):
+        for _, _, blocks in train_dataloader:
 
             num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
             if num_task_nodes == 0:
@@ -238,7 +241,7 @@ def train(num_epochs: int,
 
         # Evaluate model
         total_batches = 0
-        for _, _, blocks in tqdm(val_dataloader, desc='Evaluating'):
+        for _, _, blocks in val_dataloader:
             with torch.no_grad():
 
                 num_task_nodes = blocks[-1].dstdata['feat'][task].shape[0]
@@ -293,12 +296,20 @@ def train(num_epochs: int,
         ]
 
         # Report and log statistics
-        log = f'Epoch {epoch}\n'
+        #log = f'Epoch {epoch}\n'
         config['epoch'] = epoch
         for statistic, value in stats:
-            log += f'> {statistic}: {value}\n'
+            #log += f'> {statistic}: {value}\n'
             config[statistic] = value
-        logger.info(log)
+        #logger.info(log)
+
+        # Update progress bar description
+        desc = (f'Training - '
+                f'loss {train_loss:.3f} - '
+                f'train_f1 {train_factual_f1:.3f} - '
+                f'val_loss {val_loss:.3f} - '
+                f'val_f1 {val_factual_f1:.3f}')
+        epoch_pbar.set_description(desc)
 
         # Save model and config
         if val_factual_f1 > best_factual_f1:
@@ -309,6 +320,9 @@ def train(num_epochs: int,
 
         # Update learning rate
         scheduler.step()
+
+    # Close progress bar
+    epoch_pbar.close()
 
     # Load best model
     model.load_state_dict(torch.load(str(model_path)))
