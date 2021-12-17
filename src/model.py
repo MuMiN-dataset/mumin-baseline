@@ -76,7 +76,7 @@ class SAGEConv(nn.Module):
     def _reduce(self, nodes):
         breakpoint()
         messages = nodes.mailbox['m']
-        return {'neigh': messages.mean(dim=1)[0]}
+        return {'neigh': messages.mean(dim=1)}
 
     def _apply_node(self, nodes):
         breakpoint()
