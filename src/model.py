@@ -59,16 +59,17 @@ class SAGEConv(nn.Module):
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
-        self.batch_norm_src = nn.BatchNorm1d(self._in_src_feats)
+        self.norm_src = nn.LayerNorm(self._in_src_feats)
         self.proj_src = nn.Linear(self._in_src_feats, hidden_feats)
         self.proj_dst = nn.Linear(self._in_dst_feats, hidden_feats)
+        self.norm_dst = nn.LayerNorm(2 * hidden_feats)
         self.fc = nn.Linear(2 * hidden_feats, out_feats)
         self.dropout = nn.Dropout(dropout)
         self.activation = (lambda x: x) if activation is None else activation
 
     def _message(self, edges):
         src_feats = edges.src['h']
-        src_feats = self.batch_norm_src(src_feats)
+        src_feats = self.norm_src(src_feats)
         src_feats = self.proj_src(src_feats)
         src_feats = F.gelu(src_feats)
         return {'m': src_feats}
@@ -84,6 +85,7 @@ class SAGEConv(nn.Module):
         h_neigh = nodes.data['neigh']
 
         h = torch.cat((h_dst, h_neigh), dim=-1)
+        h = self.norm_dst(h)
         h = self.dropout(h)
         h = self.fc(h)
         h = self.activation(h)
