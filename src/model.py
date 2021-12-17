@@ -91,6 +91,7 @@ class SAGEConv(nn.Module):
 
         graph.srcdata['h'] = h_src
         graph.dstdata['h'] = h_dst
+        breakpoint()
         graph.update_all(message_func=self._message,
                          reduce_func=self._reduce,
                          apply_node_func=self._apply_node)
