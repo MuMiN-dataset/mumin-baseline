@@ -24,7 +24,7 @@ class HeteroGraphSAGE(nn.Module):
         self.conv1 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=(feats[0], feats[2]),
                            out_feats=feats[1],
-                           activation=F.relu,
+                           activation=F.gelu,
                            dropout=input_dropout)
              for rel, feats in feat_dict.items()},
             aggregate='max')
@@ -32,6 +32,7 @@ class HeteroGraphSAGE(nn.Module):
         self.conv2 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
                            out_feats=feats[1],
+                           activation=F.gelu,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
             aggregate='max')
@@ -53,20 +54,19 @@ class SAGEConv(nn.Module):
                  in_feats: int,
                  out_feats: int,
                  dropout: float,
-                 hidden_feats: int = 32,
-                 activation: Optional[Callable] = None):
+                 activation: Optional[Callable] = None,
+                 hidden_feats: int = 32)
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
         self.batch_norm_src = nn.BatchNorm1d(self._in_src_feats)
         self.proj_src = nn.Linear(self._in_src_feats, hidden_feats)
-        self.proj_dst = nn.Linear(self._in_dst_feats, out_feats)
-        self.fc = nn.Linear(self._in_src_feats + self._in_dst_feats, out_feats)
+        self.proj_dst = nn.Linear(self._in_dst_feats, hidden_feats)
+        self.fc = nn.Linear(2 * hidden_feats, out_feats)
         self.dropout = nn.Dropout(dropout)
         self.activation = (lambda x: x) if activation is None else activation
 
     def _message(self, edges):
-        breakpoint()
         src_feats = edges.src['h']
         src_feats = self.batch_norm_src(src_feats)
         src_feats = self.proj_src(src_feats)
@@ -74,18 +74,20 @@ class SAGEConv(nn.Module):
         return {'m': src_feats}
 
     def _reduce(self, nodes):
-        breakpoint()
         messages = nodes.mailbox['m']
         return {'neigh': messages.mean(dim=1)}
 
     def _apply_node(self, nodes):
-        breakpoint()
         h_dst = nodes.data['h']
+        h_dst = self.proj_dst(h_dst)
+        h_dst = F.gelu(h_dst)
         h_neigh = nodes.data['neigh']
+
         h = torch.cat((h_dst, h_neigh), dim=-1)
         h = self.dropout(h)
-        rst = self.fc(h)
-        return {'h': self.proj_dst(h_dst) + self.activation(rst)}
+        h = self.fc(h)
+        h = self.activation(h)
+        return {'h':  h}
 
     def forward(self, graph, feat):
         h_src, h_dst = expand_as_pair(feat)
