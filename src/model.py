@@ -65,7 +65,7 @@ class SAGEConv(nn.Module):
     @staticmethod
     def _reduce(nodes):
         messages = nodes.mailbox['m']
-        return {'neigh': messages.max(dim=1)}
+        return {'neigh': messages.max(dim=1)[0]}
 
     def forward(self, graph, feat):
         h_src, h_dst = expand_as_pair(feat)
