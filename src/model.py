@@ -89,6 +89,7 @@ class SAGEConv(nn.Module):
         h_neigh = nodes.data['neigh']
         h = torch.cat((h_dst, h_neigh), dim=-1)
         h = self.dropout(h)
+        print(h.shape, self._in_src_feats, self._in_dst_feats)
         h = self.fc(h)
         h = self.activation(h)
         h = self.norm_concat(h)
