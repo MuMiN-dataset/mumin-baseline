@@ -188,6 +188,7 @@ def train(num_epochs: int,
         val_factual_f1 = 0.0
 
         # Train model
+        model.train()
         for _, _, blocks in tqdm(train_dataloader,
                                  desc=f'Epoch {epoch}',
                                  leave=False):
@@ -238,6 +239,7 @@ def train(num_epochs: int,
         train_factual_f1 /= len(train_dataloader)
 
         # Evaluate model
+        model.eval()
         for _, _, blocks in val_dataloader:
             with torch.no_grad():
 
@@ -329,6 +331,7 @@ def train(num_epochs: int,
     test_factual_f1 = 0.0
 
     # Final evaluation on the validation set
+    model.eval()
     for _, _, blocks in tqdm(val_dataloader, desc='Evaluating'):
         with torch.no_grad():
 
@@ -369,6 +372,7 @@ def train(num_epochs: int,
     val_factual_f1 /= len(val_dataloader)
 
     # Final evaluation on the test set
+    model.eval()
     for _, _, blocks in tqdm(test_dataloader, desc='Evaluating'):
         with torch.no_grad():
 
