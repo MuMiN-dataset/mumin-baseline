@@ -428,7 +428,7 @@ def train(num_epochs: int,
 if __name__ == '__main__':
     config = dict(num_epochs=500,
                   batch_size=32,
-                  hidden_dim=1024,
+                  hidden_dim=128,
                   input_dropout=0.2,
                   dropout=0.3,
                   size='small',
