@@ -66,7 +66,7 @@ class SAGEConv(nn.Module):
         self._out_feats = out_feats
         self.proj_src = nn.Linear(self._in_src_feats,
                                   self._in_dst_feats)
-        self.fc = nn.Linear(self._in_dst_feats, out_feats)
+        self.fc = nn.Linear(self._in_src_feats + self._in_dst_feats, out_feats)
         self.input_dropout = nn.Dropout(input_dropout)
         self.dropout = nn.Dropout(dropout)
         self.activation = (lambda x: x) if activation is None else activation
