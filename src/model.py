@@ -78,7 +78,7 @@ class SAGEConv(nn.Module):
         self.activation = (lambda x: x) if activation is None else activation
         self.norm_concat = ((lambda x: x)
                             if activation is None
-                            else nn.LayerNorm(hidden_feats))
+                            else nn.LayerNorm(out_feats))
 
     def _message(self, edges):
         src_feats = edges.src['h']
