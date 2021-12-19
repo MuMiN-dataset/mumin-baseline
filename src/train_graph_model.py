@@ -426,11 +426,11 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    config = dict(num_epochs=10_000,
+    config = dict(num_epochs=500,
                   batch_size=32,
                   hidden_dim=1024,
-                  input_dropout=0.1,
-                  dropout=0.2,
+                  input_dropout=0.2,
+                  dropout=0.3,
                   size='small',
                   task='claim',
                   lr=2e-5,
