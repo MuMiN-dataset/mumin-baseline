@@ -64,8 +64,6 @@ class SAGEConv(nn.Module):
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
-        self.proj_src = nn.Linear(self._in_src_feats,
-                                  self._in_dst_feats)
         self.fc = nn.Linear(self._in_src_feats + self._in_dst_feats, out_feats)
         self.input_dropout = nn.Dropout(input_dropout)
         self.dropout = nn.Dropout(dropout)
@@ -77,7 +75,6 @@ class SAGEConv(nn.Module):
     def _message(self, edges):
         src_feats = edges.src['h']
         src_feats = self.input_dropout(src_feats)
-        src_feats = self.proj_src(src_feats)
         return {'m': src_feats}
 
     def _reduce(self, nodes):
@@ -87,7 +84,6 @@ class SAGEConv(nn.Module):
     def _apply_node(self, nodes):
         h_dst = nodes.data['h']
         h_neigh = nodes.data['neigh']
-        breakpoint()
         h = torch.cat((h_dst, h_neigh), dim=-1)
         h = self.dropout(h)
         h = self.fc(h)
