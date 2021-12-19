@@ -72,11 +72,13 @@ class SAGEConv(nn.Module):
         self.proj_dst = nn.Linear(self._in_dst_feats, hidden_feats)
         self.norm_src = nn.LayerNorm(hidden_feats)
         self.norm_dst = nn.LayerNorm(hidden_feats)
-        self.norm_concat = nn.LayerNorm(hidden_feats)
         self.fc = nn.Linear(2 * hidden_feats, out_feats)
         self.input_dropout = nn.Dropout(input_dropout)
         self.dropout = nn.Dropout(dropout)
         self.activation = (lambda x: x) if activation is None else activation
+        self.norm_concat = ((lambda x: x)
+                            if activation is None
+                            else nn.LayerNorm(hidden_feats))
 
     def _message(self, edges):
         src_feats = edges.src['h']
