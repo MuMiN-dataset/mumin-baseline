@@ -25,7 +25,8 @@ class HeteroGraphSAGE(nn.Module):
             {rel: SAGEConv(in_feats=(feats[0], feats[2]),
                            out_feats=feats[1],
                            activation=F.gelu,
-                           dropout=input_dropout)
+                           input_dropout=input_dropout,
+                           dropout=dropout)
              for rel, feats in feat_dict.items()},
             aggregate='sum')
 
@@ -33,12 +34,16 @@ class HeteroGraphSAGE(nn.Module):
             {rel: SAGEConv(in_feats=feats[1],
                            out_feats=feats[1],
                            activation=F.gelu,
+                           input_dropout=dropout,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
             aggregate='sum')
 
         self.conv3 = HeteroGraphConv(
-            {rel: SAGEConv(in_feats=feats[1], out_feats=1, dropout=dropout)
+            {rel: SAGEConv(in_feats=feats[1],
+                           out_feats=1,
+                           input_dropout=dropout,
+                           dropout=dropout)
              for rel, feats in feat_dict.items()},
             aggregate='sum')
 
@@ -53,6 +58,7 @@ class SAGEConv(nn.Module):
     def __init__(self,
                  in_feats: int,
                  out_feats: int,
+                 input_dropout: float,
                  dropout: float,
                  activation: Optional[Callable] = None,
                  hidden_feats: int = 32):
@@ -62,17 +68,19 @@ class SAGEConv(nn.Module):
         self.norm_src = nn.LayerNorm(self._in_src_feats)
         self.proj_src = nn.Linear(self._in_src_feats, hidden_feats)
         self.proj_dst = nn.Linear(self._in_dst_feats, hidden_feats)
-        self.norm_dst = nn.LayerNorm(2 * hidden_feats)
+        self.norm_dst = nn.LayerNorm(hidden_feats)
+        self.norm_concat = nn.LayerNorm(2 * hidden_feats)
         self.fc = nn.Linear(2 * hidden_feats, out_feats)
+        self.input_dropout = nn.Dropout(input_dropout)
         self.dropout = nn.Dropout(dropout)
         self.activation = (lambda x: x) if activation is None else activation
 
     def _message(self, edges):
         src_feats = edges.src['h']
-        src_feats = self.norm_src(src_feats)
-        src_feats = self.dropout(src_feats)
+        src_feats = self.input_dropout(src_feats)
         src_feats = self.proj_src(src_feats)
         src_feats = F.gelu(src_feats)
+        src_feats = self.norm_src(src_feats)
         return {'m': src_feats}
 
     def _reduce(self, nodes):
@@ -83,13 +91,14 @@ class SAGEConv(nn.Module):
         h_dst = nodes.data['h']
         h_dst = self.proj_dst(h_dst)
         h_dst = F.gelu(h_dst)
+        h_dst = self.norm_dst(h_dst)
         h_neigh = nodes.data['neigh']
 
         h = torch.cat((h_dst, h_neigh), dim=-1)
-        h = self.norm_dst(h)
         h = self.dropout(h)
         h = self.fc(h)
         h = self.activation(h)
+        h = self.norm_concat(h)
         return {'h':  h}
 
     def forward(self, graph, feat):
