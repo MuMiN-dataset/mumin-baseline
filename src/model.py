@@ -27,7 +27,7 @@ class HeteroGraphSAGE(nn.Module):
                            activation=F.gelu,
                            dropout=input_dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='max')
+            aggregate='sum')
 
         self.conv2 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
@@ -35,12 +35,12 @@ class HeteroGraphSAGE(nn.Module):
                            activation=F.gelu,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='max')
+            aggregate='sum')
 
         self.conv3 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1], out_feats=1, dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='max')
+            aggregate='sum')
 
     def forward(self, blocks, input_dict: dict) -> dict:
         h_dict = self.conv1(blocks[0], input_dict)
@@ -77,7 +77,7 @@ class SAGEConv(nn.Module):
 
     def _reduce(self, nodes):
         messages = nodes.mailbox['m']
-        return {'neigh': messages.mean(dim=1)}
+        return {'neigh': messages.sum(dim=1)}
 
     def _apply_node(self, nodes):
         h_dst = nodes.data['h']
