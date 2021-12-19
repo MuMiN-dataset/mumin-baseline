@@ -23,6 +23,7 @@ class HeteroGraphSAGE(nn.Module):
 
         self.conv1 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=(feats[0], feats[2]),
+                           hidden_feats=feats[1],
                            out_feats=feats[1],
                            activation=F.gelu,
                            input_dropout=input_dropout,
@@ -32,6 +33,7 @@ class HeteroGraphSAGE(nn.Module):
 
         self.conv2 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
+                           hidden_feats=feats[1],
                            out_feats=feats[1],
                            activation=F.gelu,
                            input_dropout=dropout,
@@ -41,6 +43,7 @@ class HeteroGraphSAGE(nn.Module):
 
         self.conv3 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
+                           hidden_feats=feats[1],
                            out_feats=1,
                            input_dropout=dropout,
                            dropout=dropout)
@@ -61,7 +64,7 @@ class SAGEConv(nn.Module):
                  input_dropout: float,
                  dropout: float,
                  activation: Optional[Callable] = None,
-                 hidden_feats: int = 32):
+                 hidden_feats: int):
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
