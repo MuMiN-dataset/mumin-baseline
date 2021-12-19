@@ -65,10 +65,10 @@ class SAGEConv(nn.Module):
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
-        self.norm_src = nn.LayerNorm(self._in_src_feats)
         self.proj_src = nn.Linear(self._in_src_feats, hidden_feats)
         self.proj_dst = nn.Linear(self._in_dst_feats, hidden_feats)
-        self.norm_dst = nn.LayerNorm(self._in_dst_feats)
+        self.norm_src = nn.LayerNorm(hidden_feats)
+        self.norm_dst = nn.LayerNorm(hidden_feats)
         self.norm_concat = nn.LayerNorm(2 * hidden_feats)
         self.fc = nn.Linear(2 * hidden_feats, out_feats)
         self.input_dropout = nn.Dropout(input_dropout)
