@@ -434,7 +434,7 @@ if __name__ == '__main__':
                   batch_size=32,
                   hidden_dim=128,
                   input_dropout=0.2,
-                  dropout=0.5,
+                  dropout=0.4,
                   size='small',
                   task='claim',
                   lr=2e-5,
