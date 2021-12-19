@@ -29,7 +29,7 @@ class HeteroGraphSAGE(nn.Module):
                            input_dropout=input_dropout,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='sum')
+            aggregate='mean')
 
         self.conv2 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
@@ -39,7 +39,7 @@ class HeteroGraphSAGE(nn.Module):
                            input_dropout=dropout,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='sum')
+            aggregate='mean')
 
         self.conv3 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
@@ -48,7 +48,7 @@ class HeteroGraphSAGE(nn.Module):
                            input_dropout=dropout,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='sum')
+            aggregate='mean')
 
     def forward(self, blocks, input_dict: dict) -> dict:
         h_dict = self.conv1(blocks[0], input_dict)
@@ -60,7 +60,6 @@ class HeteroGraphSAGE(nn.Module):
 class SAGEConv(nn.Module):
     def __init__(self,
                  in_feats: int,
-                 hidden_feats: int,
                  out_feats: int,
                  input_dropout: float,
                  dropout: float,
@@ -68,11 +67,9 @@ class SAGEConv(nn.Module):
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
-        self.proj_src = nn.Linear(self._in_src_feats, hidden_feats)
-        self.proj_dst = nn.Linear(self._in_dst_feats, hidden_feats)
-        self.norm_src = nn.LayerNorm(hidden_feats)
-        self.norm_dst = nn.LayerNorm(hidden_feats)
-        self.fc = nn.Linear(2 * hidden_feats, out_feats)
+        self.proj_src = nn.Linear(self._in_src_feats,
+                                  self._in_dst_feats)
+        self.fc = nn.Linear(self._in_dst_feats, out_feats)
         self.input_dropout = nn.Dropout(input_dropout)
         self.dropout = nn.Dropout(dropout)
         self.activation = (lambda x: x) if activation is None else activation
@@ -84,21 +81,15 @@ class SAGEConv(nn.Module):
         src_feats = edges.src['h']
         src_feats = self.input_dropout(src_feats)
         src_feats = self.proj_src(src_feats)
-        src_feats = F.gelu(src_feats)
-        src_feats = self.norm_src(src_feats)
         return {'m': src_feats}
 
     def _reduce(self, nodes):
         messages = nodes.mailbox['m']
-        return {'neigh': messages.sum(dim=1)}
+        return {'neigh': messages.mean(dim=1)}
 
     def _apply_node(self, nodes):
         h_dst = nodes.data['h']
-        h_dst = self.proj_dst(h_dst)
-        h_dst = F.gelu(h_dst)
-        h_dst = self.norm_dst(h_dst)
         h_neigh = nodes.data['neigh']
-
         h = torch.cat((h_dst, h_neigh), dim=-1)
         h = self.dropout(h)
         h = self.fc(h)
