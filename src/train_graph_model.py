@@ -206,7 +206,7 @@ def train(num_epochs: int,
             output_labels = blocks[-1].dstdata['label'][task].to(device)
 
             # Forward propagation
-            logits = model(blocks, input_feats)
+            logits = model(blocks, input_feats).squeeze(1)
 
             # Compute loss
             loss = F.binary_cross_entropy_with_logits(
