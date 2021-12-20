@@ -16,15 +16,18 @@ class HeteroGraphSAGE(nn.Module):
     def __init__(self,
                  input_dropout: float,
                  dropout: float,
+                 hidden_dim: int,
                  feat_dict: Dict[Tuple[str, str, str],
                                  Tuple[int, int, int]],
                  task: str = 'claim'):
         super().__init__()
         self.feat_dict = feat_dict
+        self.hidden_dim = hidden_dim
+        self.task = task
 
         self.conv1 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=(feats[0], feats[2]),
-                           out_feats=feats[1],
+                           out_feats=hidden_dim,
                            activation=F.gelu,
                            input_dropout=input_dropout,
                            dropout=dropout)
@@ -32,8 +35,8 @@ class HeteroGraphSAGE(nn.Module):
             aggregate='sum')
 
         self.conv2 = HeteroGraphConv(
-            {rel: SAGEConv(in_feats=feats[1],
-                           out_feats=feats[1],
+            {rel: SAGEConv(in_feats=hidden_dim,
+                           out_feats=hidden_dim,
                            activation=F.gelu,
                            input_dropout=dropout,
                            dropout=dropout)
@@ -41,8 +44,8 @@ class HeteroGraphSAGE(nn.Module):
             aggregate='sum')
 
         self.conv3 = HeteroGraphConv(
-            {rel: SAGEConv(in_feats=feats[1],
-                           out_feats=feats[1],
+            {rel: SAGEConv(in_feats=hidden_dim,
+                           out_feats=hidden_dim,
                            activation=F.gelu,
                            input_dropout=dropout,
                            dropout=dropout)
@@ -50,9 +53,9 @@ class HeteroGraphSAGE(nn.Module):
             aggregate='sum')
 
         self.clf = nn.Sequential(
-            nn.Linear(feat_dict[task][1], feat_dict[task][1]),
+            nn.Linear(hidden_dim, hidden_dim),
             nn.GELU(),
-            nn.Linear(feat_dict[task][1], 1)
+            nn.Linear(hidden_dim, 1)
         )
 
 
@@ -60,7 +63,7 @@ class HeteroGraphSAGE(nn.Module):
         h_dict = self.conv1(blocks[0], input_dict)
         h_dict = self.conv2(blocks[1], h_dict)
         h_dict = self.conv3(blocks[2], h_dict)
-        return self.clf(h_dict[task])
+        return self.clf(h_dict[self.task])
 
 
 class SAGEConv(nn.Module):

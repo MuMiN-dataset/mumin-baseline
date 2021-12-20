@@ -105,12 +105,13 @@ def train(num_epochs: int,
     # Initialise dictionary with feature dimensions
     dims = {ntype: graph.nodes[ntype].data['feat'].shape[-1]
             for ntype in graph.ntypes}
-    feat_dict = {rel: (dims[rel[0]], hidden_dim, dims[rel[2]])
+    feat_dict = {rel: (dims[rel[0]], dims[rel[2]])
                  for rel in graph.canonical_etypes}
 
     # Initialise model
     model = HeteroGraphSAGE(input_dropout=input_dropout,
                             dropout=dropout,
+                            hidden_dim=hidden_dim,
                             feat_dict=feat_dict)
     model.to(device)
     model.train()
