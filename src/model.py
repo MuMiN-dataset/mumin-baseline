@@ -17,7 +17,8 @@ class HeteroGraphSAGE(nn.Module):
                  input_dropout: float,
                  dropout: float,
                  feat_dict: Dict[Tuple[str, str, str],
-                                 Tuple[int, int, int]]):
+                                 Tuple[int, int, int]],
+                 task: str = 'claim'):
         super().__init__()
         self.feat_dict = feat_dict
 
@@ -41,17 +42,25 @@ class HeteroGraphSAGE(nn.Module):
 
         self.conv3 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
-                           out_feats=1,
+                           out_feats=feats[1],
+                           activation=F.gelu,
                            input_dropout=dropout,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
             aggregate='sum')
 
+        self.clf = nn.Sequential(
+            nn.Linear(feat_dict[task][1], feat_dict[task][1]),
+            nn.GELU(),
+            nn.Linear(feat_dict[task][1], 1)
+        )
+
+
     def forward(self, blocks, input_dict: dict) -> dict:
         h_dict = self.conv1(blocks[0], input_dict)
         h_dict = self.conv2(blocks[1], h_dict)
         h_dict = self.conv3(blocks[2], h_dict)
-        return h_dict
+        return self.clf(h_dict[task])
 
 
 class SAGEConv(nn.Module):
