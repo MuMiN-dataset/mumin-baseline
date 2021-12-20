@@ -28,7 +28,7 @@ class HeteroGraphSAGE(nn.Module):
                            input_dropout=input_dropout,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='mean')
+            aggregate='sum')
 
         self.conv2 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
@@ -37,7 +37,7 @@ class HeteroGraphSAGE(nn.Module):
                            input_dropout=dropout,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='mean')
+            aggregate='sum')
 
         self.conv3 = HeteroGraphConv(
             {rel: SAGEConv(in_feats=feats[1],
@@ -45,7 +45,7 @@ class HeteroGraphSAGE(nn.Module):
                            input_dropout=dropout,
                            dropout=dropout)
              for rel, feats in feat_dict.items()},
-            aggregate='mean')
+            aggregate='sum')
 
     def forward(self, blocks, input_dict: dict) -> dict:
         h_dict = self.conv1(blocks[0], input_dict)
