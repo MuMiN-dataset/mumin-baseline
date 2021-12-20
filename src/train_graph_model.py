@@ -207,7 +207,6 @@ def train(num_epochs: int,
 
             # Forward propagation
             logits = model(blocks, input_feats)
-            logits = logits[task].squeeze(1)
 
             # Compute loss
             loss = F.binary_cross_entropy_with_logits(
