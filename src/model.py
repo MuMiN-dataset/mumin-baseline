@@ -26,7 +26,7 @@ class HeteroGraphSAGE(nn.Module):
         self.task = task
 
         self.conv1 = HeteroGraphConv(
-            {rel: SAGEConv(in_feats=(feats[0], feats[2]),
+            {rel: SAGEConv(in_feats=(feats[0], feats[1]),
                            out_feats=hidden_dim,
                            activation=F.gelu,
                            input_dropout=input_dropout,
@@ -40,7 +40,7 @@ class HeteroGraphSAGE(nn.Module):
                            activation=F.gelu,
                            input_dropout=dropout,
                            dropout=dropout)
-             for rel, feats in feat_dict.items()},
+             for rel, _ in feat_dict.items()},
             aggregate='sum')
 
         self.conv3 = HeteroGraphConv(
@@ -49,7 +49,7 @@ class HeteroGraphSAGE(nn.Module):
                            activation=F.gelu,
                            input_dropout=dropout,
                            dropout=dropout)
-             for rel, feats in feat_dict.items()},
+             for rel, _ in feat_dict.items()},
             aggregate='sum')
 
         self.clf = nn.Sequential(
