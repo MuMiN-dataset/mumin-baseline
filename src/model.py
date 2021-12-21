@@ -58,11 +58,23 @@ class HeteroGraphSAGE(nn.Module):
             nn.Linear(hidden_dim, 1)
         )
 
+        self.norm1 = nn.LayerNorm(hidden_dim)
+        self.norm2 = nn.LayerNorm(hidden_dim)
+        self.norm3 = nn.LayerNorm(hidden_dim)
 
-    def forward(self, blocks, input_dict: dict) -> dict:
-        h_dict = self.conv1(blocks[0], input_dict)
+    # def _agg_func(self, inputs, dsttype):
+    #     if len(inputs) == 0:
+    #         return None
+    #     stacked = torch.stack(inputs, dim=0)
+    #     return fn(stacked, dim=0)
+
+    def forward(self, blocks, h_dict: dict) -> dict:
+        h_dict = self.conv1(blocks[0], h_dict)
+        h_dict = {k: self.norm1(v) for k, v in h_dict.items()}
         h_dict = self.conv2(blocks[1], h_dict)
+        h_dict = {k: self.norm2(v) for k, v in h_dict.items()}
         h_dict = self.conv3(blocks[2], h_dict)
+        h_dict = {k: self.norm3(v) for k, v in h_dict.items()}
         return self.clf(h_dict[self.task])
 
 
@@ -76,17 +88,19 @@ class SAGEConv(nn.Module):
         super().__init__()
         self._in_src_feats, self._in_dst_feats = expand_as_pair(in_feats)
         self._out_feats = out_feats
+        self.src_fc = nn.Linear(self._in_src_feats, self._in_src_feats)
         self.fc = nn.Linear(self._in_src_feats + self._in_dst_feats, out_feats)
         self.input_dropout = nn.Dropout(input_dropout)
         self.dropout = nn.Dropout(dropout)
         self.activation = (lambda x: x) if activation is None else activation
-        self.norm_concat = ((lambda x: x)
-                            if activation is None
-                            else nn.LayerNorm(out_feats))
+        # self.norm_concat = ((lambda x: x)
+        #                     if activation is None
+        #                     else nn.LayerNorm(out_feats))
 
     def _message(self, edges):
         src_feats = edges.src['h']
         src_feats = self.input_dropout(src_feats)
+        src_feats = self.src_fc(src_feats)
         return {'m': src_feats}
 
     def _reduce(self, nodes):
@@ -100,7 +114,7 @@ class SAGEConv(nn.Module):
         h = self.dropout(h)
         h = self.fc(h)
         h = self.activation(h)
-        h = self.norm_concat(h)
+        # h = self.norm_concat(h)
         return {'h':  h}
 
     def forward(self, graph, feat):
