@@ -7,6 +7,7 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+import torch.utils.data as D
 from torch.optim.lr_scheduler import LinearLR
 import torchmetrics as tm
 from dgl.data.utils import save_graphs, load_graphs
@@ -32,7 +33,8 @@ def train(num_epochs: int,
           task: str,
           lr: float,
           betas: Tuple[float, float],
-          pos_weight: float):
+          pos_weight: float,
+          random_split: bool = False):
     '''Train a heterogeneous GraphConv model on the MuMiN dataset.
 
     Args:
@@ -58,6 +60,10 @@ def train(num_epochs: int,
             The coefficients for the Adam optimizer.
         pos_weight (float):
             The weight to give to the positive examples.
+        random_split (bool):
+            Whether a random train/val/test split of the data should be
+            performed (with a fixed random seed). If not then the claim cluster
+            splits will be used. Defaults to False.
     '''
     # Set random seeds
     torch.manual_seed(4242)
@@ -116,15 +122,42 @@ def train(num_epochs: int,
     model.to(device)
     model.train()
 
-    # Set up the training and validation node IDs, being the node indexes where
-    # `train_mask` and `val_mask` is True, respectively
+    # Enumerate the nodes with the labels, for performing train/val/test splits
     node_enum = torch.arange(graph.num_nodes(task))
-    train_nids = {task: node_enum[train_mask].int()}
-    val_nids = {task: node_enum[val_mask].int()}
-    test_nids = {task: node_enum[test_mask].int()}
+
+    # If we are performing a random split then split the dataset into a
+    # 80/10/10 train/val/test split, with a fixed random seed
+    if random_split:
+
+        # Set a random seed through a PyTorch Generator
+        torch_gen = torch.Generator().manual_seed(4242)
+
+        # Compute the number of train/val/test samples
+        num_train = int(0.8 * graph.num_nodes(task))
+        num_val = int(0.1 * graph.num_nodes(task))
+        num_test = graph.num_nodes(task) - (num_train + num_val)
+        nums = [num_train, num_val, num_test]
+
+        # Split the data, using the PyTorch generator for reproducibility
+        train_nids, val_nids, test_nids = D.random_split(dataset=node_enum,
+                                                         lengths=nums,
+                                                         generator=torch_gen)
+
+        # Store the resulting node IDs
+        train_nids = {task: train_nids}
+        val_nids = {task: val_nids}
+        test_nids = {task: test_nids}
+
+    # If we are not performing a random split we're performing a split based on
+    # the claim clusters of the data. This means that the different splits will
+    # belong to different events, thus making the task harder.
+    else:
+        train_nids = {task: node_enum[train_mask].int()}
+        val_nids = {task: node_enum[val_mask].int()}
+        test_nids = {task: node_enum[test_mask].int()}
 
     # Set up the sampler
-    sampler = MultiLayerNeighborSampler([50, 50, 50], replace=False)
+    sampler = MultiLayerNeighborSampler([100, 100, 100], replace=False)
 
     # Set up the dataloaders
     train_dataloader = NodeDataLoader(g=graph,
@@ -133,21 +166,21 @@ def train(num_epochs: int,
                                       batch_size=batch_size,
                                       shuffle=True,
                                       drop_last=False,
-                                      num_workers=4)
+                                      num_workers=1)
     val_dataloader = NodeDataLoader(g=graph,
                                     nids=val_nids,
                                     block_sampler=sampler,
                                     batch_size=batch_size,
                                     shuffle=False,
                                     drop_last=False,
-                                    num_workers=4)
+                                    num_workers=1)
     test_dataloader = NodeDataLoader(g=graph,
                                      nids=test_nids,
                                      block_sampler=sampler,
                                      batch_size=batch_size,
                                      shuffle=False,
                                      drop_last=False,
-                                     num_workers=4)
+                                     num_workers=1)
 
     # Set up pos_weight
     pos_weight_tensor = torch.tensor(pos_weight).to(device)
@@ -206,7 +239,7 @@ def train(num_epochs: int,
             output_labels = blocks[-1].dstdata['label'][task].to(device)
 
             # Forward propagation
-            logits = model(blocks, input_feats).squeeze(1)
+            logits = model(blocks, input_feats).squeeze()
 
             # Compute loss
             loss = F.binary_cross_entropy_with_logits(
@@ -252,7 +285,7 @@ def train(num_epochs: int,
                 output_labels = blocks[-1].dstdata['label'][task].to(device)
 
                 # Forward propagation
-                logits = model(blocks, input_feats).squeeze(1)
+                logits = model(blocks, input_feats).squeeze()
 
                 # Compute validation loss
                 loss = F.binary_cross_entropy_with_logits(
@@ -319,7 +352,7 @@ def train(num_epochs: int,
     epoch_pbar.close()
 
     # Load best model
-    model.load_state_dict(torch.load(str(model_path)))
+    # model.load_state_dict(torch.load(str(model_path)))
 
     # Reset metrics
     val_loss = 0.0
@@ -343,7 +376,7 @@ def train(num_epochs: int,
             output_labels = blocks[-1].dstdata['label'][task].to(device)
 
             # Forward propagation
-            logits = model(blocks, input_feats).squeeze(1)
+            logits = model(blocks, input_feats).squeeze()
 
             # Compute validation loss
             loss = F.binary_cross_entropy_with_logits(
@@ -383,7 +416,7 @@ def train(num_epochs: int,
             output_labels = blocks[-1].dstdata['label'][task].to(device)
 
             # Forward propagation
-            logits = model(blocks, input_feats).squeeze(1)
+            logits = model(blocks, input_feats).squeeze()
 
             # Compute validation loss
             loss = F.binary_cross_entropy_with_logits(
@@ -427,14 +460,15 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    config = dict(num_epochs=500,
+    config = dict(num_epochs=200,
                   batch_size=32,
                   hidden_dim=128,
                   input_dropout=0.1,
                   dropout=0.2,
                   size='small',
                   task='claim',
-                  lr=2e-5,
+                  lr=3e-4,
                   betas=(0.9, 0.999),
-                  pos_weight=1.)
+                  pos_weight=1.,
+                  random_split=False)
     train(**config)
