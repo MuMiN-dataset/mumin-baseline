@@ -6,7 +6,6 @@ from datasets import Dataset, load_metric
 from typing import Dict
 import sys
 import os
-import pandas as pd
 from dotenv import load_dotenv
 from mumin import MuminDataset
 
@@ -16,7 +15,7 @@ from trainer_with_class_weights import TrainerWithClassWeights
 load_dotenv()
 
 
-def main(model_id: str) -> Dict[str, float]:
+def main(model_id: str, size: str) -> Dict[str, float]:
     '''Train a transformer model on the dataset.
 
     Args:
@@ -28,7 +27,7 @@ def main(model_id: str) -> Dict[str, float]:
             values the scores.
     '''
     # Load the dataset
-    mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'], size='small')
+    mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'], size=size)
     mumin_dataset.compile()
     tweet_df = mumin_dataset.nodes['tweet']
     tweet2claim_df = mumin_dataset.rels[('tweet', 'discusses', 'claim')]
@@ -107,7 +106,6 @@ def main(model_id: str) -> Dict[str, float]:
         warmup_ratio=0.01,  # 10 epochs
         gradient_accumulation_steps=4,
         metric_for_best_model='factual_f1',
-        load_best_model_at_end=True,
     )
 
     # Initialise the Trainer
@@ -133,5 +131,9 @@ def main(model_id: str) -> Dict[str, float]:
 if __name__ == '__main__':
     labse_model = 'sentence-transformers/LaBSE'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else labse_model
-    results = main(model_id)
-    print(results)
+
+    for size in ['small', 'medium', 'large']:
+        results = main(model_id, size)
+        print(f'Results for {size}:')
+        print(results)
+        print()

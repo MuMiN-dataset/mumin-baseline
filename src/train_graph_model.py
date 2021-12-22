@@ -351,9 +351,6 @@ def train(num_epochs: int,
     # Close progress bar
     epoch_pbar.close()
 
-    # Load best model
-    # model.load_state_dict(torch.load(str(model_path)))
-
     # Reset metrics
     val_loss = 0.0
     val_misinformation_f1 = 0.0

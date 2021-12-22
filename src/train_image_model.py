@@ -5,7 +5,6 @@ from transformers import (AutoModelForImageClassification,
 from datasets import Dataset, load_metric
 from typing import Dict
 import sys
-import pandas as pd
 import numpy as np
 from mumin import MuminDataset
 import os
@@ -18,7 +17,7 @@ from trainer_with_class_weights import TrainerWithClassWeights
 load_dotenv()
 
 
-def main(model_id: str) -> Dict[str, float]:
+def main(model_id: str, size: str) -> Dict[str, float]:
     '''Train a vision transformer model on the dataset.
 
     Args:
@@ -30,7 +29,7 @@ def main(model_id: str) -> Dict[str, float]:
             values the scores.
     '''
     # Load the dataset
-    mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'], size='small')
+    mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'], size=size)
     mumin_dataset.compile()
     image_df = mumin_dataset.nodes['image']
     tweet2image_df = mumin_dataset.rels[('tweet', 'has_image', 'image')]
@@ -149,5 +148,9 @@ def main(model_id: str) -> Dict[str, float]:
 if __name__ == '__main__':
     patch_model_id = 'google/vit-base-patch16-224-in21k'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else patch_model_id
-    results = main(model_id)
-    print(results)
+
+    for size in ['small', 'medium', 'large']:
+        results = main(model_id, size)
+        print(f'Results for {size}:')
+        print(results)
+        print()
