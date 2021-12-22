@@ -125,7 +125,6 @@ def main(model_id: str) -> Dict[str, float]:
         warmup_ratio=0.01,  # 10 epochs
         gradient_accumulation_steps=4,
         metric_for_best_model='factual_f1',
-        load_best_model_at_end=True,
     )
 
     # Initialise the Trainer
