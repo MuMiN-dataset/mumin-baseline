@@ -131,3 +131,18 @@
   test_loss: 0.308
   test_factual_f1: 0.214
   test_misinfo_f1: 0.979
+
+- size: small
+  type: image
+  frozen: false
+  split: random
+  model_id: google/vit-base-patch16-224-in21k
+  train_loss: 0.650
+  train_factual_f1: 0.175
+  train_misinfo_f1: 0.881
+  val_loss: 0.634
+  val_factual_f1: 0.080
+  val_misinfo_f1: 0.922
+  test_loss: 0.647
+  test_factual_f1: 0.333
+  test_misinfo_f1: 0.942
