@@ -137,12 +137,12 @@
   frozen: false
   split: random
   model_id: google/vit-base-patch16-224-in21k
-  train_loss: 0.650
-  train_factual_f1: 0.175
-  train_misinfo_f1: 0.881
-  val_loss: 0.634
-  val_factual_f1: 0.080
-  val_misinfo_f1: 0.922
-  test_loss: 0.647
-  test_factual_f1: 0.333
-  test_misinfo_f1: 0.942
+  train_loss: 2.788
+  train_factual_f1: 0.332
+  train_misinfo_f1: 0.738
+  val_loss: 3.905
+  val_factual_f1: 0.026
+  val_misinfo_f1: 0.686
+  test_loss: 3.725
+  test_factual_f1: 0.161
+  test_misinfo_f1: 0.679
