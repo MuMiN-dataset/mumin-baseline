@@ -135,7 +135,7 @@
 - size: small
   type: image
   frozen: false
-  split: random
+  split: cluster
   model_id: google/vit-base-patch16-224-in21k
   train_loss: 2.788
   train_factual_f1: 0.332
