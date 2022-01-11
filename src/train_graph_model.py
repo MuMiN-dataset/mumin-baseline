@@ -457,7 +457,8 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    config = dict(num_epochs=1000,
+    config = dict(size='small',
+                  num_epochs=1000,
                   batch_size=32,
                   hidden_dim=128,
                   input_dropout=0.1,
@@ -467,7 +468,4 @@ if __name__ == '__main__':
                   betas=(0.9, 0.999),
                   pos_weight=1.,
                   random_split=False)
-
-    for size in ['small', 'medium', 'large']:
-        config['size'] = size
-        train(**config)
+    train(**config)
