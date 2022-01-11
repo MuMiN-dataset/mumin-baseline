@@ -13,6 +13,20 @@
   test_factual_f1: 0.303
   test_misinfo_f1: 0.948
 
+- size: small
+  type: claim
+  frozen: true
+  split: random
+  model_id: sentence-transformers/LaBSE
+  train_loss: 0.025
+  train_factual_f1: 0.896
+  val_loss: 0.287
+  val_factual_f1: 0.480
+  val_misinfo_f1: 0.969
+  test_loss: 0.226
+  test_factual_f1: 0.071
+  test_misinfo_f1: 0.963
+
 - size: medium
   type: claim
   frozen: false
@@ -74,18 +88,19 @@
   test_misinfo_f1: 0.942
 
 - size: small
-  type: claim
-  frozen: true
-  split: random
-  model_id: sentence-transformers/LaBSE
-  train_loss: 0.025
-  train_factual_f1: 0.896
-  val_loss: 0.287
-  val_factual_f1: 0.480
-  val_misinfo_f1: 0.969
-  test_loss: 0.226
-  test_factual_f1: 0.071
-  test_misinfo_f1: 0.963
+  type: image
+  frozen: false
+  split: cluster
+  model_id: google/vit-base-patch16-224-in21k
+  train_loss: 2.788
+  train_factual_f1: 0.332
+  train_misinfo_f1: 0.738
+  val_loss: 3.905
+  val_factual_f1: 0.026
+  val_misinfo_f1: 0.686
+  test_loss: 3.725
+  test_factual_f1: 0.161
+  test_misinfo_f1: 0.679
 
 - size: small
   type: graph
@@ -146,18 +161,3 @@
   test_loss: 0.308
   test_factual_f1: 0.214
   test_misinfo_f1: 0.979
-
-- size: small
-  type: image
-  frozen: false
-  split: cluster
-  model_id: google/vit-base-patch16-224-in21k
-  train_loss: 2.788
-  train_factual_f1: 0.332
-  train_misinfo_f1: 0.738
-  val_loss: 3.905
-  val_factual_f1: 0.026
-  val_misinfo_f1: 0.686
-  test_loss: 3.725
-  test_factual_f1: 0.161
-  test_misinfo_f1: 0.679
