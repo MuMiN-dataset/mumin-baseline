@@ -91,8 +91,8 @@ def main(model_id: str, size: str) -> Dict[str, float]:
     # Set up the training arguments
     training_args = TrainingArguments(
         output_dir='models',
-        per_device_train_batch_size=8,
-        per_device_eval_batch_size=8,
+        per_device_train_batch_size=2,
+        per_device_eval_batch_size=2,
         num_train_epochs=1000,
         evaluation_strategy='steps',
         logging_strategy='steps',
@@ -104,7 +104,7 @@ def main(model_id: str, size: str) -> Dict[str, float]:
         save_total_limit=1,
         learning_rate=2e-5,
         warmup_ratio=0.01,  # 10 epochs
-        gradient_accumulation_steps=4,
+        gradient_accumulation_steps=16,
         metric_for_best_model='factual_f1',
     )
 
@@ -132,8 +132,8 @@ if __name__ == '__main__':
     labse_model = 'sentence-transformers/LaBSE'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else labse_model
 
-    for size in ['small', 'medium', 'large']:
-        results = main(model_id, size)
-        print(f'Results for {size}:')
-        print(results)
-        print()
+    size = 'small'
+    results = main(model_id, size)
+    print(f'Results for {size}:')
+    print(results)
+    print()
