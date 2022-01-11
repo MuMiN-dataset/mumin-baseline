@@ -58,6 +58,21 @@
   test_factual_f1: 0.045
   test_misinfo_f1: 0.961
 
+- size: medium
+  type: thread
+  frozen: false
+  split: cluster
+  model_id: sentence-transformers/LaBSE
+  train_loss: 0.006
+  train_factual_f1: 0.996
+  train_misinfo_f1: 1.000
+  val_loss: 2.146
+  val_factual_f1: 0.164
+  val_misinfo_f1: 0.959
+  test_loss: 3.040
+  test_factual_f1: 0.207
+  test_misinfo_f1: 0.942
+
 - size: small
   type: claim
   frozen: true
