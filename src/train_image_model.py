@@ -2,7 +2,7 @@
 
 from transformers import (AutoModelForImageClassification,
                           AutoFeatureExtractor, AutoConfig, TrainingArguments)
-from datasets import Dataset, load_metric
+from datasets import Dataset, load_metric, set_caching_enabled
 from typing import Dict
 import sys
 import numpy as np
@@ -48,13 +48,24 @@ def main(model_id: str, size: str) -> Dict[str, float]:
     val_df = image_df.query('val_mask == True')
     test_df = image_df.query('test_mask == True')
 
+    # Convert dataset to dictionaries
+    train_dict = dict(pixels=train_df.pixels.map(lambda x: x.tobytes()),
+                      width=train_df.pixels.map(lambda x: x.shape[0]),
+                      height=train_df.pixels.map(lambda x: x.shape[1]),
+                      orig_label=train_df.label)
+    val_dict = dict(pixels=val_df.pixels.map(lambda x: x.tobytes()),
+                    width=val_df.pixels.map(lambda x: x.shape[0]),
+                    height=val_df.pixels.map(lambda x: x.shape[1]),
+                    orig_label=val_df.label)
+    test_dict = dict(pixels=test_df.pixels.map(lambda x: x.tobytes()),
+                     width=test_df.pixels.map(lambda x: x.shape[0]),
+                     height=test_df.pixels.map(lambda x: x.shape[1]),
+                     orig_label=test_df.label)
+
     # Convert the dataset to the HuggingFace format
-    train = Dataset.from_dict(dict(pixels=train_df.pixels.tolist(),
-                                   orig_label=train_df.label.tolist()))
-    val = Dataset.from_dict(dict(pixels=val_df.pixels.tolist(),
-                                 orig_label=val_df.label.tolist()))
-    test = Dataset.from_dict(dict(pixels=test_df.pixels.tolist(),
-                                  orig_label=test_df.label.tolist()))
+    train = Dataset.from_dict(train_dict)
+    val = Dataset.from_dict(val_dict)
+    test = Dataset.from_dict(test_dict)
 
     # Garbage collection
     del df, image_df, claim_df, train_df, val_df, test_df, mumin_dataset
@@ -81,18 +92,23 @@ def main(model_id: str, size: str) -> Dict[str, float]:
                               for lbl in examples['orig_label']]
 
         # Extract the features
-        images = [np.moveaxis(np.array(image, dtype=np.uint8),
-                              source=-1,
-                              destination=0)
-                  for image in examples['pixels']]
+        images = [
+            np.moveaxis(np.frombuffer(buf, dtype='uint8')
+                          .reshape(width, height, 3),
+                        source=-1,
+                        destination=0)
+            for buf, width, height in zip(examples['pixels'],
+                                          examples['width'],
+                                          examples['height'])
+        ]
         inputs = feat_extractor(images=images)
         examples['pixel_values'] = inputs['pixel_values']
 
         return examples
 
-    train = train.map(preprocess, batched=True)
-    val = val.map(preprocess, batched=True)
-    test = test.map(preprocess, batched=True)
+    train = train.map(preprocess, batched=True, batch_size=32)
+    val = val.map(preprocess, batched=True, batch_size=32)
+    test = test.map(preprocess, batched=True, batch_size=32)
 
     # Set up compute_metrics function
     def compute_metrics(preds_and_labels: tuple) -> Dict[str, float]:
@@ -109,9 +125,9 @@ def main(model_id: str, size: str) -> Dict[str, float]:
     # Set up the training arguments
     training_args = TrainingArguments(
         output_dir='models',
-        per_device_train_batch_size=8,
-        per_device_eval_batch_size=8,
-        num_train_epochs=1000,
+        per_device_train_batch_size=32,
+        per_device_eval_batch_size=32,
+        num_train_epochs=100,
         evaluation_strategy='steps',
         logging_strategy='steps',
         save_strategy='steps',
@@ -122,7 +138,7 @@ def main(model_id: str, size: str) -> Dict[str, float]:
         save_total_limit=1,
         learning_rate=2e-5,
         warmup_ratio=0.01,  # 10 epochs
-        gradient_accumulation_steps=4,
+        gradient_accumulation_steps=1,
         metric_for_best_model='factual_f1',
     )
 
@@ -149,7 +165,7 @@ if __name__ == '__main__':
     patch_model_id = 'google/vit-base-patch16-224-in21k'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else patch_model_id
 
-    for size in ['small', 'medium', 'large']:
+    for size in ['medium', 'large']:
         results = main(model_id, size)
         print(f'Results for {size}:')
         print(results)
