@@ -127,7 +127,7 @@ def main(model_id: str, size: str) -> Dict[str, float]:
         output_dir='models',
         per_device_train_batch_size=32,
         per_device_eval_batch_size=32,
-        num_train_epochs=100,
+        num_train_epochs=250,
         evaluation_strategy='steps',
         logging_strategy='steps',
         save_strategy='steps',
@@ -165,8 +165,8 @@ if __name__ == '__main__':
     patch_model_id = 'google/vit-base-patch16-224-in21k'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else patch_model_id
 
-    for size in ['medium', 'large']:
-        results = main(model_id, size)
-        print(f'Results for {size}:')
-        print(results)
-        print()
+    size = 'large'
+    results = main(model_id, size)
+    print(f'Results for {size}:')
+    print(results)
+    print()
