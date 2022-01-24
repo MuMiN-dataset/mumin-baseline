@@ -16,16 +16,17 @@
 - size: small
   type: claim
   frozen: true
-  split: random
+  split: cluster
   model_id: sentence-transformers/LaBSE
-  train_loss: 0.025
-  train_factual_f1: 0.896
-  val_loss: 0.287
-  val_factual_f1: 0.480
-  val_misinfo_f1: 0.969
-  test_loss: 0.226
-  test_factual_f1: 0.071
-  test_misinfo_f1: 0.963
+  train_loss: 0.459
+  train_factual_f1: 0.374
+  train_misinfo_f1: 0.917
+  val_loss: 0.513
+  val_factual_f1: 0.157
+  val_misinfo_f1: 0.903
+  test_loss: 0.511
+  test_factual_f1: 0.216
+  test_misinfo_f1: 0.934
 
 - size: medium
   type: claim
@@ -42,6 +43,21 @@
   test_factual_f1: 0.195
   test_misinfo_f1: 0.922
 
+- size: medium
+  type: claim
+  frozen: true
+  split: random
+  model_id: sentence-transformers/LaBSE
+  train_loss: 0.425
+  train_factual_f1: 0.333
+  train_misinfo_f1: 0.942
+  val_loss: 0.342
+  val_factual_f1: 0.237
+  val_misinfo_f1: 0.952
+  test_loss: 0.507
+  test_factual_f1: 0.173
+  test_misinfo_f1: 0.909
+
 - size: large
   type: claim
   frozen: false
@@ -56,6 +72,21 @@
   test_loss: 0.317
   test_factual_f1: 0.217
   test_misinfo_f1: 0.041
+
+- size: large
+  type: claim
+  frozen: true
+  split: random
+  model_id: sentence-transformers/LaBSE
+  train_loss: 0.400
+  train_factual_f1: 0.300
+  train_misinfo_f1: 0.950
+  val_loss: 0.309
+  val_factual_f1: 0.262
+  val_misinfo_f1: 0.966
+  test_loss: 0.378
+  test_factual_f1: 0.160
+  test_misinfo_f1: 0.940
 
 - size: small
   type: source-tweet
@@ -149,60 +180,63 @@
 
 - size: small
   type: graph
-  nhops: 1
-  hetero_layer_norm: false
-  split: random
-  model_id: sentence-transformers/LaBSE
-  train_loss: 0.013
-  train_factual_f1: 0.879
-  val_loss: 0.292
+  nhops: 3
+  hetero_layer_norm: true
+  hidden_dim: 512
+  batch_size: 1024
+  input_dropout: 0.2
+  dropout: 0.5
+  lr: 3e-4
+  epochs: 100
+  pos_weight: 2
+  split: cluster
+  train_loss: 0.153
+  train_factual_f1: 0.734
+  val_loss: 0.505
+  val_factual_f1: 0.098
+  val_misinfo_f1: 0.918
+  test_loss: 0.532
+  test_factual_f1: 0.129
+  test_misinfo_f1: 0.938
+
+- size: small
+  type: graph
+  nhops: 2
+  hetero_layer_norm: true
+  hidden_dim: 512
+  batch_size: 1024
+  input_dropout: 0.2
+  dropout: 0.5
+  lr: 3e-4
+  epochs: 100
+  pos_weight: 2
+  split: cluster
+  train_loss: 0.261
+  train_factual_f1: 0.543
+  val_loss: 0.409
   val_factual_f1: 0.143
-  val_misinfo_f1: 0.976
-  test_loss: 0.660
-  test_factual_f1: 0.338
-  test_misinfo_f1: 0.937
+  val_misinfo_f1: 0.948
+  test_loss: 0.356
+  test_factual_f1: 0.200
+  test_misinfo_f1: 0.964
 
 - size: small
   type: graph
   nhops: 2
   hetero_layer_norm: false
-  split: random
-  model_id: sentence-transformers/LaBSE
-  train_loss: 0.004
-  train_factual_f1: 0.915
-  val_loss: 0.403
-  val_factual_f1: 0.190
-  val_misinfo_f1: 0.968
-  test_loss: 0.959
-  test_factual_f1: 0.403
-  test_misinfo_f1: 0.915
-
-- size: small
-  type: graph
-  nhops: 3
-  hetero_layer_norm: false
-  split: random
-  model_id: sentence-transformers/LaBSE
-  train_loss: 0.005
-  train_factual_f1: 0.921
-  val_loss: 0.429
-  val_factual_f1: 0.190
-  val_misinfo_f1: 0.971
-  test_loss: 1.004
-  test_factual_f1: 0.376
-  test_misinfo_f1: 0.917
-
-- size: small
-  type: graph
-  nhops: 3
-  hetero_layer_norm: true
-  split: random
-  model_id: sentence-transformers/LaBSE
-  train_loss: 0.007
+  hidden_dim: 512
+  batch_size: 1024
+  input_dropout: 0.2
+  dropout: 0.5
+  lr: 3e-4
+  epochs: 100
+  pos_weight: 2
+  split: cluster
+  train_loss: 0.083
   train_factual_f1: 0.841
-  val_loss: 0.595
-  val_factual_f1: 0.310
-  val_misinfo_f1: 0.957
-  test_loss: 0.308
-  test_factual_f1: 0.214
-  test_misinfo_f1: 0.979
+  val_loss: 0.701
+  val_factual_f1: 0.053
+  val_misinfo_f1: 0.921
+  test_loss: 0.907
+  test_factual_f1: 0.138
+  test_misinfo_f1: 0.943
