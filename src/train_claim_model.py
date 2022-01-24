@@ -51,6 +51,10 @@ def main(model_id: str, size: str) -> Dict[str, float]:
                                                                config=config)
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
+    # TEMP: Freeze layers
+    # for param in model.bert.parameters():
+    #     param.requires_grad = False
+
     # Preprocess the datasets
     def preprocess(examples: dict) -> dict:
         labels = ['misinformation', 'factual']
@@ -121,8 +125,8 @@ if __name__ == '__main__':
     labse_model = 'sentence-transformers/LaBSE'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else labse_model
 
-    for size in ['small', 'medium', 'large']:
-        results = main(model_id, size)
-        print(f'Results for {size}:')
-        print(results)
-        print()
+    size = 'large'
+    results = main(model_id, size)
+    print(f'Results for {size}:')
+    print(results)
+    print()
