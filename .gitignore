@@ -140,6 +140,7 @@ dmypy.json
 mumin-*.zip
 dgl-graph-*.bin
 *.pkl
+*.arrow
 
 # Models
 models
