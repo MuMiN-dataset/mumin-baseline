@@ -43,14 +43,14 @@ class HeteroGraphSAGE(nn.Module):
              for rel, _ in feat_dict.items()},
             aggregate='sum')
 
-        self.conv3 = HeteroGraphConv(
-            {rel: SAGEConv(in_feats=hidden_dim,
-                           out_feats=hidden_dim,
-                           activation=F.gelu,
-                           input_dropout=dropout,
-                           dropout=dropout)
-             for rel, _ in feat_dict.items()},
-            aggregate='sum')
+        # self.conv3 = HeteroGraphConv(
+        #     {rel: SAGEConv(in_feats=hidden_dim,
+        #                    out_feats=hidden_dim,
+        #                    activation=F.gelu,
+        #                    input_dropout=dropout,
+        #                    dropout=dropout)
+        #      for rel, _ in feat_dict.items()},
+        #     aggregate='sum')
 
         self.clf = nn.Sequential(
             nn.Linear(hidden_dim, hidden_dim),
@@ -58,9 +58,7 @@ class HeteroGraphSAGE(nn.Module):
             nn.Linear(hidden_dim, 1)
         )
 
-        self.norm1 = nn.LayerNorm(hidden_dim)
-        self.norm2 = nn.LayerNorm(hidden_dim)
-        self.norm3 = nn.LayerNorm(hidden_dim)
+        self.norm = nn.LayerNorm(hidden_dim)
 
     # def _agg_func(self, inputs, dsttype):
     #     if len(inputs) == 0:
@@ -70,11 +68,11 @@ class HeteroGraphSAGE(nn.Module):
 
     def forward(self, blocks, h_dict: dict) -> dict:
         h_dict = self.conv1(blocks[0], h_dict)
-        h_dict = {k: self.norm1(v) for k, v in h_dict.items()}
+        h_dict = {k: self.norm(v) for k, v in h_dict.items()}
         h_dict = self.conv2(blocks[1], h_dict)
-        h_dict = {k: self.norm2(v) for k, v in h_dict.items()}
-        h_dict = self.conv3(blocks[2], h_dict)
-        h_dict = {k: self.norm3(v) for k, v in h_dict.items()}
+        h_dict = {k: self.norm(v) for k, v in h_dict.items()}
+        #h_dict = self.conv3(blocks[2], h_dict)
+        #h_dict = {k: self.norm(v) for k, v in h_dict.items()}
         return self.clf(h_dict[self.task])
 
 
