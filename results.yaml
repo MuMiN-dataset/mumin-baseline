@@ -202,6 +202,27 @@
 - size: small
   type: graph
   nhops: 2
+  hetero_layer_norm: false
+  hidden_dim: 512
+  batch_size: 1024
+  input_dropout: 0.2
+  dropout: 0.5
+  lr: 3e-4
+  epochs: 100
+  pos_weight: 2
+  split: cluster
+  train_loss: 0.083
+  train_factual_f1: 0.841
+  val_loss: 0.701
+  val_factual_f1: 0.053
+  val_misinfo_f1: 0.921
+  test_loss: 0.907
+  test_factual_f1: 0.138
+  test_misinfo_f1: 0.943
+
+- size: small
+  type: graph
+  nhops: 2
   hetero_layer_norm: true
   hidden_dim: 512
   batch_size: 1024
@@ -220,10 +241,10 @@
   test_factual_f1: 0.200
   test_misinfo_f1: 0.964
 
-- size: small
+- size: medium
   type: graph
   nhops: 2
-  hetero_layer_norm: false
+  hetero_layer_norm: true
   hidden_dim: 512
   batch_size: 1024
   input_dropout: 0.2
@@ -232,11 +253,11 @@
   epochs: 100
   pos_weight: 2
   split: cluster
-  train_loss: 0.083
-  train_factual_f1: 0.841
-  val_loss: 0.701
-  val_factual_f1: 0.053
-  val_misinfo_f1: 0.921
-  test_loss: 0.907
-  test_factual_f1: 0.138
-  test_misinfo_f1: 0.943
+  train_loss: 0.216
+  train_factual_f1: 0.530
+  val_loss: 0.244
+  val_factual_f1: 0.970
+  val_misinfo_f1: 0.098
+  test_loss: 0.333
+  test_factual_f1: 0.959
+  test_misinfo_f1: 0.197
