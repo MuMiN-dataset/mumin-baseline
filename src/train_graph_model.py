@@ -459,7 +459,7 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    config = dict(size='medium',
+    config = dict(size='large',
                   random_split=False,
                   num_epochs=300,
                   hidden_dim=1024,
