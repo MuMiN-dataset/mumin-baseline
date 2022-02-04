@@ -107,8 +107,6 @@ def train(num_epochs: int,
     val_mask = graph.nodes[task].data['val_mask'].bool()
     test_mask = graph.nodes[task].data['test_mask'].bool()
 
-    breakpoint()
-
     # Initialise dictionary with feature dimensions
     dims = {ntype: graph.nodes[ntype].data['feat'].shape[-1]
             for ntype in graph.ntypes}
@@ -470,6 +468,18 @@ if __name__ == '__main__':
                   dropout=0.2,
                   betas=(0.9, 0.999),
                   pos_weight=20.)
-    for key, val in config.items():
-        print(f'{key}={val}')
-    train(**config)
+
+    for size in ['medium', 'large']:
+        config['size'] = size
+        for key, val in config.items():
+            print(f'{key}={val}')
+        train(**config)
+
+    for task in ['claim', 'tweet']:
+        for size in ['small', 'medium', 'large']:
+            config['random_split'] = True
+            config['task'] = task
+            config['size'] = size
+            for key, val in config.items():
+                print(f'{key}={val}')
+            train(**config)
