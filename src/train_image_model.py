@@ -17,11 +17,13 @@ from trainer_with_class_weights import TrainerWithClassWeights
 load_dotenv()
 
 
-def main(model_id: str, size: str) -> Dict[str, float]:
+def main(model_id: str, size: str, dropout: float) -> Dict[str, float]:
     '''Train a vision transformer model on the dataset.
 
     Args:
         model_id (str): The model id to use.
+        size (str): The size of the dataset.
+        dropout (float): The dropout to use.
 
     Returns:
         dict:
@@ -75,9 +77,9 @@ def main(model_id: str, size: str) -> Dict[str, float]:
     config_dict = dict(num_labels=2,
                        id2label={0: 'misinformation', 1: 'factual'},
                        label2id=dict(misinformation=0, factual=1),
-                       hidden_dropout_prob=0.2,
-                       attention_probs_dropout_prob=0.2,
-                       classifier_dropout_prob=0.2)
+                       hidden_dropout_prob=dropout,
+                       attention_probs_dropout_prob=dropout,
+                       classifier_dropout_prob=dropout)
     config = AutoConfig.from_pretrained(model_id, **config_dict)
     model = AutoModelForImageClassification.from_pretrained(model_id,
                                                             config=config)
@@ -165,8 +167,9 @@ if __name__ == '__main__':
     patch_model_id = 'google/vit-base-patch16-224-in21k'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else patch_model_id
 
-    size = 'large'
-    results = main(model_id, size)
-    print(f'Results for {size}:')
+    size = 'small'
+    dropout = 0.2
+    results = main(model_id, size, dropout)
+    print(f'Results for {size} with {100 * dropout:.2f}% dropout:')
     print(results)
     print()
