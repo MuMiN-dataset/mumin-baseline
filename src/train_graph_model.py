@@ -339,11 +339,11 @@ def train(num_epochs: int,
         epoch_pbar.set_description(desc)
 
         # Save model and config
-        if val_factual_f1 > best_factual_f1:
-            best_factual_f1 = val_factual_f1
-            torch.save(model.state_dict(), str(model_path))
-            with config_path.open('w') as f:
-                json.dump(config, f)
+        # if val_factual_f1 > best_factual_f1:
+        #     best_factual_f1 = val_factual_f1
+        #     torch.save(model.state_dict(), str(model_path))
+        #     with config_path.open('w') as f:
+        #         json.dump(config, f)
 
         # Update learning rate
         scheduler.step()
@@ -457,15 +457,24 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
+    import numpy as np
     config = dict(size='small',
-                  num_epochs=100,
+                  random_split=False,
+                  num_epochs=300,
+                  hidden_dim=1024,
                   batch_size=1024,
-                  hidden_dim=512,
-                  input_dropout=0.2,
-                  dropout=0.5,
-                  task='claim',
+                  task='tweet',
                   lr=3e-4,
+                  input_dropout=0.2,
+                  dropout=0.2,
                   betas=(0.9, 0.999),
-                  pos_weight=2.,
-                  random_split=False)
-    train(**config)
+                  pos_weight=20.)
+    for random_split in [False, True]:
+        for task in ['claim', 'tweet']:
+            for size in ['small', 'medium', 'large']:
+                config['random_split'] = random_split
+                config['task'] = task
+                config['size'] = size
+                for key, val in config.items():
+                    print(f'{key}={val}')
+                train(**config)
