@@ -107,6 +107,8 @@ def train(num_epochs: int,
     val_mask = graph.nodes[task].data['val_mask'].bool()
     test_mask = graph.nodes[task].data['test_mask'].bool()
 
+    breakpoint()
+
     # Initialise dictionary with feature dimensions
     dims = {ntype: graph.nodes[ntype].data['feat'].shape[-1]
             for ntype in graph.ntypes}
