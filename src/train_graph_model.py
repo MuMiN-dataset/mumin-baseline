@@ -469,8 +469,6 @@ if __name__ == '__main__':
                   betas=(0.9, 0.999),
                   pos_weight=20.)
     for size in ['small', 'medium', 'large']:
-        config['random_split'] = random_split
-        config['task'] = task
         config['size'] = size
         for key, val in config.items():
             print(f'{key}={val}')
