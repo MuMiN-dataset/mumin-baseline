@@ -266,14 +266,14 @@
   lr: 3e-4
   epochs: 300
   pos_weight: 20
-  train_loss:
-  train_factual_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.168
+  train_factual_f1: 0.805
+  val_loss: 1.639
+  val_factual_f1: 0.038
+  val_misinfo_f1: 0.902
+  test_loss: 4.786
+  test_factual_f1: 0.189
+  test_misinfo_f1: 0.932
 
 - size: medium
   type: graph
