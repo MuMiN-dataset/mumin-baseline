@@ -459,7 +459,7 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    config = dict(size='small',
+    config = dict(size='medium',
                   random_split=False,
                   num_epochs=300,
                   hidden_dim=1024,
@@ -470,8 +470,6 @@ if __name__ == '__main__':
                   dropout=0.2,
                   betas=(0.9, 0.999),
                   pos_weight=20.)
-    for size in ['small', 'medium', 'large']:
-        config['size'] = size
-        for key, val in config.items():
-            print(f'{key}={val}')
-        train(**config)
+    for key, val in config.items():
+        print(f'{key}={val}')
+    train(**config)
