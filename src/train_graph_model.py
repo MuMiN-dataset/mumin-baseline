@@ -468,12 +468,10 @@ if __name__ == '__main__':
                   dropout=0.2,
                   betas=(0.9, 0.999),
                   pos_weight=20.)
-    for random_split in [False, True]:
-        for task in ['claim', 'tweet']:
-            for size in ['small', 'medium', 'large']:
-                config['random_split'] = random_split
-                config['task'] = task
-                config['size'] = size
-                for key, val in config.items():
-                    print(f'{key}={val}')
-                train(**config)
+    for size in ['small', 'medium', 'large']:
+        config['random_split'] = random_split
+        config['task'] = task
+        config['size'] = size
+        for key, val in config.items():
+            print(f'{key}={val}')
+        train(**config)
