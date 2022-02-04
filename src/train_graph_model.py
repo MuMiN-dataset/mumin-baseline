@@ -15,7 +15,6 @@ from dgl.dataloading.neighbor import MultiLayerNeighborSampler
 from dgl.dataloading.pytorch import NodeDataLoader
 import dgl
 import logging
-import json
 from typing import Tuple
 import datetime as dt
 from tqdm.auto import tqdm
@@ -118,7 +117,8 @@ def train(num_epochs: int,
     model = HeteroGraphSAGE(input_dropout=input_dropout,
                             dropout=dropout,
                             hidden_dim=hidden_dim,
-                            feat_dict=feat_dict)
+                            feat_dict=feat_dict,
+                            task=task)
     model.to(device)
     model.train()
 
@@ -457,7 +457,6 @@ def train(num_epochs: int,
 
 
 if __name__ == '__main__':
-    import numpy as np
     config = dict(size='small',
                   random_split=False,
                   num_epochs=300,
