@@ -1,12 +1,9 @@
 '''Implementation of a heterogeneous GraphSAGE model'''
 
-import dgl.function as dglfn
 from dgl.utils import expand_as_pair
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
 from typing import Dict, Tuple, Optional, Callable
 
 from heterographconv import HeteroGraphConv
