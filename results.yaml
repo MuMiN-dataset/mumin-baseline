@@ -288,14 +288,14 @@
   lr: 3e-4
   epochs: 300
   pos_weight: 20
-  train_loss:
-  train_factual_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.139
+  train_factual_f1: 0.809
+  val_loss: 2.424
+  val_factual_f1: 0.270
+  val_misinfo_f1: 0.932
+  test_loss: 8.403
+  test_factual_f1: 0.173
+  test_misinfo_f1: 0.909
 
 - size: large
   type: graph
@@ -310,14 +310,14 @@
   lr: 3e-4
   epochs: 300
   pos_weight: 20
-  train_loss:
-  train_factual_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.120
+  train_factual_f1: 0.814
+  val_loss: 2.17
+  val_factual_f1: 0.260
+  val_misinfo_f1: 0.971
+  test_loss: 3.369
+  test_factual_f1: 0.269
+  test_misinfo_f1: 0.960
 
 - size: small
   type: graph
@@ -332,14 +332,14 @@
   lr: 3e-4
   epochs: 300
   pos_weight: 20
-  train_loss:
-  train_factual_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.424
+  train_factual_f1: 0.565
+  val_loss: 3.514
+  val_factual_f1: 0.423
+  val_misinfo_f1: 0.921
+  test_loss: 2.642
+  test_factual_f1: 0.083
+  test_misinfo_f1: 0.887
 
 - size: medium
   type: graph
@@ -354,14 +354,14 @@
   lr: 3e-4
   epochs: 300
   pos_weight: 20
-  train_loss:
-  train_factual_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.311
+  train_factual_f1: 0.558
+  val_loss: 2.277
+  val_factual_f1: 0.415
+  val_misinfo_f1: 0.938
+  test_loss: 2.672
+  test_factual_f1: 0.294
+  test_misinfo_f1: 0.934
 
 - size: large
   type: graph
@@ -376,14 +376,14 @@
   lr: 3e-4
   epochs: 300
   pos_weight: 20
-  train_loss:
-  train_factual_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.321
+  train_factual_f1: 0.510
+  val_loss: 2.400
+  val_factual_f1: 0.409
+  val_misinfo_f1: 0.938
+  test_loss: 1.736
+  test_factual_f1: 0.311
+  test_misinfo_f1: 0.940
 
 - size: small
   type: graph
@@ -398,14 +398,14 @@
   lr: 3e-4
   epochs: 300
   pos_weight: 20
-  train_loss:
-  train_factual_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.106
+  train_factual_f1: 0.854
+  val_loss: 4.404
+  val_factual_f1: 0.585
+  val_misinfo_f1: 0.957
+  test_loss: 4.584
+  test_factual_f1: 0.537
+  test_misinfo_f1: 0.961
 
 - size: medium
   type: graph
@@ -420,14 +420,14 @@
   lr: 3e-4
   epochs: 300
   pos_weight: 20
-  train_loss:
-  train_factual_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.176
+  train_factual_f1: 0.746
+  val_loss: 1.717
+  val_factual_f1: 0.653
+  val_misinfo_f1: 0.955
+  test_loss: 1.178
+  test_factual_f1: 0.807
+  test_misinfo_f1: 0.983
 
 - size: large
   type: graph
@@ -442,11 +442,11 @@
   lr: 3e-4
   epochs: 300
   pos_weight: 20
-  train_loss:
-  train_factual_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.116
+  train_factual_f1: 0.811
+  val_loss: 1.784
+  val_factual_f1: 0.634
+  val_misinfo_f1: 0.977
+  test_loss: 1.995
+  test_factual_f1: 0.620
+  test_misinfo_f1: 0.976
