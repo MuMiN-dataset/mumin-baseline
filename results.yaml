@@ -164,15 +164,15 @@
   frozen: false
   split: cluster
   model_id: google/vit-base-patch16-224-in21k
-  train_loss: 1.500
-  train_factual_f1: 0.321
-  train_misinfo_f1: 0.808
-  val_loss: 2.484
-  val_factual_f1: 0.017
-  val_misinfo_f1: 0.850
-  test_loss: 3.306
-  test_factual_f1: 0.087
-  test_misinfo_f1: 0.766
+  train_loss: 0.013
+  train_factual_f1: 0.942
+  train_misinfo_f1: 0.995
+  val_loss: 1.158
+  val_factual_f1: 0.047
+  val_misinfo_f1: 0.953
+  test_loss: 2.669
+  test_factual_f1: 0.105
+  test_misinfo_f1: 0.935
 
 - size: large
   type: image
@@ -180,15 +180,15 @@
   frozen: false
   split: cluster
   model_id: google/vit-base-patch16-224-in21k
-  train_loss: 1.417
-  train_factual_f1: 0.225
-  train_misinfo_f1: 0.819
-  val_loss: 1.494
-  val_factual_f1: 0.022
-  val_misinfo_f1: 0.840
-  test_loss: 2.428
-  test_factual_f1: 0.092
-  test_misinfo_f1: 0.784
+  train_loss:
+  train_factual_f1:
+  train_misinfo_f1:
+  val_loss:
+  val_factual_f1:
+  val_misinfo_f1:
+  test_loss:
+  test_factual_f1:
+  test_misinfo_f1:
 
 - size: small
   type: graph
