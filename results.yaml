@@ -50,7 +50,7 @@
   type: text
   task: claim
   frozen: true
-  split: random
+  split: cluster
   model_id: sentence-transformers/LaBSE
   train_loss: 0.425
   train_factual_f1: 0.333
@@ -76,13 +76,13 @@
   val_misinfo_f1: 0.974
   test_loss: 0.317
   test_factual_f1: 0.217
-  test_misinfo_f1: 0.041
+  test_misinfo_f1: 0.941
 
 - size: large
   type: text
   task: claim
   frozen: true
-  split: random
+  split: cluster
   model_id: sentence-transformers/LaBSE
   train_loss: 0.400
   train_factual_f1: 0.300
