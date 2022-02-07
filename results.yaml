@@ -180,15 +180,15 @@
   frozen: false
   split: cluster
   model_id: google/vit-base-patch16-224-in21k
-  train_loss:
-  train_factual_f1:
-  train_misinfo_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.032
+  train_factual_f1: 0.842
+  train_misinfo_f1: 0.989
+  val_loss: 0.623
+  val_factual_f1: 0.000
+  val_misinfo_f1: 0.987
+  test_loss: 2.338
+  test_factual_f1: 0.035
+  test_misinfo_f1: 0.939
 
 - size: small
   type: graph
