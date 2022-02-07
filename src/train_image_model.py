@@ -167,8 +167,8 @@ if __name__ == '__main__':
     patch_model_id = 'google/vit-base-patch16-224-in21k'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else patch_model_id
 
-    size = 'large'
-    dropout = 0.2
+    size = 'small'
+    dropout = 0.3
     results = main(model_id, size, dropout)
     print(f'Results for {size} with {100 * dropout:.2f}% dropout:')
     print(results)
