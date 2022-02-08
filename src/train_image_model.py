@@ -129,7 +129,7 @@ def main(model_id: str, size: str, dropout: float) -> Dict[str, float]:
         output_dir='models',
         per_device_train_batch_size=32,
         per_device_eval_batch_size=32,
-        num_train_epochs=250,
+        num_train_epochs=100,
         evaluation_strategy='steps',
         logging_strategy='steps',
         save_strategy='steps',
@@ -167,8 +167,8 @@ if __name__ == '__main__':
     patch_model_id = 'google/vit-base-patch16-224-in21k'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else patch_model_id
 
-    size = 'small'
-    dropout = 0.3
+    size = 'large'
+    dropout = 0.4
     results = main(model_id, size, dropout)
     print(f'Results for {size} with {100 * dropout:.2f}% dropout:')
     print(results)
