@@ -16,6 +16,7 @@ load_dotenv()
 
 def main(model_id: str,
          size: str,
+         frozen: bool = False,
          random_split: bool = False) -> Dict[str, float]:
     '''Train a transformer model on the dataset.
 
@@ -24,6 +25,8 @@ def main(model_id: str,
             The model id to use.
         size (str):
             The size of the dataset to use.
+        frozen (bool, optional):
+            Whether to freeze the model weights. Defaults to False.
         random_split (bool, optional):
             Whether to use a random split of the dataset. Defaults to False.
 
@@ -69,9 +72,10 @@ def main(model_id: str,
                                                                config=config)
     tokenizer = AutoTokenizer.from_pretrained(model_id)
 
-    # TEMP: Freeze layers
-    # for param in model.bert.parameters():
-    #     param.requires_grad = False
+    # Freeze layers if required
+    if frozen:
+        for param in model.bert.parameters():
+            param.requires_grad = False
 
     # Preprocess the datasets
     def preprocess(examples: dict) -> dict:
@@ -144,7 +148,7 @@ if __name__ == '__main__':
     model_id = sys.argv[-1] if len(sys.argv) > 1 else labse_model
 
     size = 'small'
-    results = main(model_id, size, random_split=True)
+    results = main(model_id, size, random_split=True, frozen=False)
     print(f'Results for {size}:')
     print(results)
     print()
