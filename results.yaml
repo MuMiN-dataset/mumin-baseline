@@ -30,6 +30,22 @@
   test_factual_f1: 0.216
   test_misinfo_f1: 0.934
 
+- size: small
+  type: text
+  task: claim
+  frozen: false
+  split: random
+  model_id: sentence-transformers/LaBSE
+  train_loss:
+  train_factual_f1:
+  train_misinfo_f1:
+  val_loss:
+  val_factual_f1:
+  val_misinfo_f1:
+  test_loss:
+  test_factual_f1:
+  test_misinfo_f1:
+
 - size: medium
   type: text
   task: claim
@@ -61,6 +77,22 @@
   test_loss: 0.507
   test_factual_f1: 0.173
   test_misinfo_f1: 0.909
+
+- size: medium
+  type: text
+  task: claim
+  frozen: false
+  split: random
+  model_id: sentence-transformers/LaBSE
+  train_loss:
+  train_factual_f1:
+  train_misinfo_f1:
+  val_loss:
+  val_factual_f1:
+  val_misinfo_f1:
+  test_loss:
+  test_factual_f1:
+  test_misinfo_f1:
 
 - size: large
   type: text
@@ -94,6 +126,22 @@
   test_factual_f1: 0.160
   test_misinfo_f1: 0.940
 
+- size: large
+  type: text
+  task: claim
+  frozen: false
+  split: random
+  model_id: sentence-transformers/LaBSE
+  train_loss:
+  train_factual_f1:
+  train_misinfo_f1:
+  val_loss:
+  val_factual_f1:
+  val_misinfo_f1:
+  test_loss:
+  test_factual_f1:
+  test_misinfo_f1:
+
 - size: small
   type: text
   task: tweet
@@ -109,6 +157,22 @@
   test_loss: 1.227
   test_factual_f1: 0.152
   test_misinfo_f1: 0.938
+
+- size: small
+  type: text
+  task: tweet
+  frozen: false
+  split: random
+  model_id: sentence-transformers/LaBSE
+  train_loss:
+  train_factual_f1:
+  train_misinfo_f1:
+  val_loss:
+  val_factual_f1:
+  val_misinfo_f1:
+  test_loss:
+  test_factual_f1:
+  test_misinfo_f1:
 
 - size: medium
   type: text
@@ -126,6 +190,22 @@
   test_factual_f1: 0.207
   test_misinfo_f1: 0.942
 
+- size: medium
+  type: text
+  task: tweet
+  frozen: false
+  split: random
+  model_id: sentence-transformers/LaBSE
+  train_loss:
+  train_factual_f1:
+  train_misinfo_f1:
+  val_loss:
+  val_factual_f1:
+  val_misinfo_f1:
+  test_loss:
+  test_factual_f1:
+  test_misinfo_f1:
+
 - size: large
   type: text
   task: tweet
@@ -141,6 +221,22 @@
   test_loss: 0.415
   test_factual_f1: 0.078
   test_misinfo_f1: 0.978
+
+- size: large
+  type: text
+  task: tweet
+  frozen: false
+  split: random
+  model_id: sentence-transformers/LaBSE
+  train_loss:
+  train_factual_f1:
+  train_misinfo_f1:
+  val_loss:
+  val_factual_f1:
+  val_misinfo_f1:
+  test_loss:
+  test_factual_f1:
+  test_misinfo_f1:
 
 - size: small
   type: image
