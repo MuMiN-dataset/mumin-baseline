@@ -14,11 +14,18 @@ from trainer_with_class_weights import TrainerWithClassWeights
 load_dotenv()
 
 
-def main(model_id: str, size: str) -> Dict[str, float]:
+def main(model_id: str,
+         size: str,
+         random_split: bool = False) -> Dict[str, float]:
     '''Train a transformer model on the dataset.
 
     Args:
-        model_id (str): The model id to use.
+        model_id (str):
+            The model id to use.
+        size (str):
+            The size of the dataset to use.
+        random_split (bool, optional):
+            Whether to use a random split of the dataset. Defaults to False.
 
     Returns:
         dict:
@@ -27,9 +34,20 @@ def main(model_id: str, size: str) -> Dict[str, float]:
     '''
     # Load the dataset
     claim_df = pd.read_pickle(f'claim_dump_{size}.pkl.xz')
-    train_df = claim_df.query('train_mask == True')
-    val_df = claim_df.query('val_mask == True')
-    test_df = claim_df.query('test_mask == True')
+
+    # If we are performing a random split then split the dataset into a
+    # 80/10/10 train/val/test split, with a fixed random seed
+    if random_split:
+        train_df = claim_df.sample(frac=0.8, random_state=42)
+        val_test_df = claim_df.drop(train_df.index)
+        val_df = val_test_df.sample(frac=0.5, random_state=42)
+        test_df  = val_test_df.drop(val_df.index)
+
+    # Otherwise, use the train/val/test split that is already in the dataset
+    else:
+        train_df = claim_df.query('train_mask == True')
+        val_df = claim_df.query('val_mask == True')
+        test_df = claim_df.query('test_mask == True')
 
     # Convert the dataset to the HuggingFace format
     train = Dataset.from_dict(dict(text=train_df.claim.tolist(),

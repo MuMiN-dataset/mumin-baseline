@@ -17,13 +17,21 @@ from trainer_with_class_weights import TrainerWithClassWeights
 load_dotenv()
 
 
-def main(model_id: str, size: str, dropout: float) -> Dict[str, float]:
+def main(model_id: str,
+         size: str,
+         dropout: float,
+         random_split: bool = False) -> Dict[str, float]:
     '''Train a vision transformer model on the dataset.
 
     Args:
-        model_id (str): The model id to use.
-        size (str): The size of the dataset.
-        dropout (float): The dropout to use.
+        model_id (str):
+            The model id to use.
+        size (str):
+            The size of the dataset.
+        dropout (float):
+            The dropout to use.
+        random_split (bool, optional):
+            Whether to use a random split. Defaults to False.
 
     Returns:
         dict:
@@ -46,9 +54,20 @@ def main(model_id: str, size: str, dropout: float) -> Dict[str, float]:
                          on='tweet_idx')
                   .merge(claim_df, left_on='claim_idx', right_index=True))
     image_df = df[['pixels', 'label', 'train_mask', 'val_mask', 'test_mask']]
-    train_df = image_df.query('train_mask == True')
-    val_df = image_df.query('val_mask == True')
-    test_df = image_df.query('test_mask == True')
+
+    # If we are performing a random split then split the dataset into a
+    # 80/10/10 train/val/test split, with a fixed random seed
+    if random_split:
+        train_df = image_df.sample(frac=0.8, random_state=42)
+        val_test_df = image_df.drop(train_df.index)
+        val_df = val_test_df.sample(frac=0.5, random_state=42)
+        test_df  = val_test_df.drop(val_df.index)
+
+    # Otherwise, use the train/val/test split that is already in the dataset
+    else:
+        train_df = image_df.query('train_mask == True')
+        val_df = image_df.query('val_mask == True')
+        test_df = image_df.query('test_mask == True')
 
     # Convert dataset to dictionaries
     train_dict = dict(pixels=train_df.pixels.map(lambda x: x.tobytes()),
