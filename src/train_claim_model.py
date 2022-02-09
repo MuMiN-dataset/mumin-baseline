@@ -120,7 +120,6 @@ def main(model_id: str,
         learning_rate=2e-5,
         warmup_ratio=0.01,  # 10 epochs
         gradient_accumulation_steps=8,
-        metric_for_best_model='factual_f1',
     )
 
     # Initialise the Trainer
