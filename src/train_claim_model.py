@@ -44,7 +44,7 @@ def main(model_id: str,
         train_df = claim_df.sample(frac=0.8, random_state=42)
         val_test_df = claim_df.drop(train_df.index)
         val_df = val_test_df.sample(frac=0.5, random_state=42)
-        test_df  = val_test_df.drop(val_df.index)
+        test_df = val_test_df.drop(val_df.index)
 
     # Otherwise, use the train/val/test split that is already in the dataset
     else:
@@ -108,7 +108,7 @@ def main(model_id: str,
         output_dir='models',
         per_device_train_batch_size=4,
         per_device_eval_batch_size=4,
-        num_train_epochs=1000,
+        num_train_epochs=300,
         evaluation_strategy='steps',
         logging_strategy='steps',
         save_strategy='steps',
