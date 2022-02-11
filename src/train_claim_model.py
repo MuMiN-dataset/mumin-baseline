@@ -106,8 +106,8 @@ def main(model_id: str,
     # Set up the training arguments
     training_args = TrainingArguments(
         output_dir='models',
-        per_device_train_batch_size=2,
-        per_device_eval_batch_size=2,
+        per_device_train_batch_size=1,
+        per_device_eval_batch_size=1,
         num_train_epochs=300,
         evaluation_strategy='steps',
         logging_strategy='steps',
@@ -119,7 +119,7 @@ def main(model_id: str,
         save_total_limit=1,
         learning_rate=2e-5,
         warmup_ratio=0.01,  # 10 epochs
-        gradient_accumulation_steps=16,
+        gradient_accumulation_steps=32,
     )
 
     # Initialise the Trainer
