@@ -146,7 +146,7 @@ if __name__ == '__main__':
     labse_model = 'sentence-transformers/LaBSE'
     model_id = sys.argv[-1] if len(sys.argv) > 1 else labse_model
 
-    size = 'medium'
+    size = 'large'
     results = main(model_id, size, random_split=True, frozen=False)
     print(f'Results for {size}:')
     print(results)
