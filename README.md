@@ -13,7 +13,7 @@ To perform the baselines we have centralised all the training scripts into the `
 
 - `model_type`: This picks the type of model you want to benchmark. Can be 'claim', 'tweet', 'image' or 'graph.
 - `size`: The size of the MuMiN dataset to perform the benchmark.
-- `task`: Only relevant if `model_type`=='graph', in which case it determines whether you want to benchmark the graph model on the claim classification task or the tweet classification task.
+- `task`: Only relevant if `model_type=='graph'`, in which case it determines whether you want to benchmark the graph model on the claim classification task or the tweet classification task.
 
 Call `python src/train.py --help` for a more detailed list of all the arguments
 that can be used.
