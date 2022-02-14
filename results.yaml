@@ -164,15 +164,15 @@
   frozen: false
   split: random
   model_id: sentence-transformers/LaBSE
-  train_loss:
-  train_factual_f1:
-  train_misinfo_f1:
-  val_loss:
-  val_factual_f1:
-  val_misinfo_f1:
-  test_loss:
-  test_factual_f1:
-  test_misinfo_f1:
+  train_loss: 0.152
+  train_factual_f1: 0.857
+  train_misinfo_f1: 0.987
+  val_loss: 0.930
+  val_factual_f1: 0.395
+  val_misinfo_f1: 0.944
+  test_loss: 0.689
+  test_factual_f1: 0.481
+  test_misinfo_f1: 0.941
 
 - size: medium
   type: text
