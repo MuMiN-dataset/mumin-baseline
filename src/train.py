@@ -47,15 +47,7 @@ from train_graph_model import train_graph_model
               type=int,
               help='The amount of epochs to train for. ')
 def main(model_type: str, **kwargs):
-    '''Main function that calls the training scripts of various baselines.
-
-    Args:
-        model_type (str):
-            The type of model to train. Can be 'claim', 'tweet', 'image', or
-            'graph'.
-        **kwargs:
-            Additional arguments to pass to the training script.
-    '''
+    '''Benchmark models on the MuMiN dataset.'''
     if model_type == 'claim':
         kwargs['model_id'] = kwargs.pop('text_model_id')
         train_claim_model(**kwargs)
