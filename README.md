@@ -7,7 +7,7 @@ dataset, introduced in the following paper:
 > Fact-Checked Misinformation Social Network Dataset_ (2022).
 
 
-## Reproducing paper results
+## Reproducing model baselines
 
 To perform the baselines we have centralised all the training scripts into the `src/train.py` script. This can be called with many different parameters, of which the mandatory ones are the following:
 
@@ -17,3 +17,10 @@ To perform the baselines we have centralised all the training scripts into the `
 
 Call `python src/train.py --help` for a more detailed list of all the arguments
 that can be used.
+
+
+## Random/majority baselines
+
+The random and majority baselines are calculated based on the proportion of
+`misinformation` labels in the dataset. See the
+`random_majority_macro_f1.ipynb` notebook for details.
