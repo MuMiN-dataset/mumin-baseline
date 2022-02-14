@@ -15,7 +15,6 @@ from dgl.dataloading.neighbor import MultiLayerNeighborSampler
 from dgl.dataloading.pytorch import NodeDataLoader
 import dgl
 import logging
-from typing import Tuple
 import datetime as dt
 from tqdm.auto import tqdm
 
@@ -23,43 +22,23 @@ from tqdm.auto import tqdm
 logger = logging.getLogger(__name__)
 
 
-def train(num_epochs: int,
-          batch_size: int,
-          hidden_dim: int,
-          input_dropout: float,
-          dropout: float,
-          size: str,
-          task: str,
-          lr: float,
-          betas: Tuple[float, float],
-          pos_weight: float,
-          random_split: bool = False):
+def train_graph_model(task: str,
+                      size: str,
+                      num_epochs: int = 300,
+                      random_split: bool = False,
+                      **_):
     '''Train a heterogeneous GraphConv model on the MuMiN dataset.
 
     Args:
-        num_epochs (int):
-            The number of epochs to train for.
-        batch_size (int):
-            The batch size.
-        hidden_dim (int):
-            The dimension of the hidden layer.
-        input_dropout (float):
-            The amount of dropout of the inputs.
-        dropout (float):
-            The amount of dropout of the hidden layers.
-        size (str):
-            The size of the dataset to use.
         task (str):
             The task to consider, which can be either 'tweet' or 'claim',
             corresponding to doing thread-level or claim-level node
             classification.
-        lr (float):
-            The learning rate.
-        betas (Tuple[float, float]):
-            The coefficients for the Adam optimizer.
-        pos_weight (float):
-            The weight to give to the positive examples.
-        random_split (bool):
+        size (str):
+            The size of the dataset to use.
+        num_epochs (int, optional):
+            The number of epochs to train for. Defaults to 300.
+        random_split (bool, optional):
             Whether a random train/val/test split of the data should be
             performed (with a fixed random seed). If not then the claim cluster
             splits will be used. Defaults to False.
@@ -69,14 +48,14 @@ def train(num_epochs: int,
     dgl.seed(4242)
 
     # Set config
-    config = dict(hidden_dim=hidden_dim,
-                  input_dropout=input_dropout,
-                  dropout=dropout,
+    config = dict(hidden_dim=1024,
+                  input_dropout=0.2,
+                  dropout=0.2,
                   size=size,
                   task=task,
-                  lr=lr,
-                  betas=betas,
-                  pos_weight=pos_weight)
+                  lr=3e-4,
+                  betas=(0.9, 0.999),
+                  pos_weight=20.)
 
     # Set up PyTorch device
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -114,9 +93,9 @@ def train(num_epochs: int,
                  for rel in graph.canonical_etypes}
 
     # Initialise model
-    model = HeteroGraphSAGE(input_dropout=input_dropout,
-                            dropout=dropout,
-                            hidden_dim=hidden_dim,
+    model = HeteroGraphSAGE(input_dropout=0.2,
+                            dropout=0.2,
+                            hidden_dim=1024,
                             feat_dict=feat_dict,
                             task=task)
     model.to(device)
@@ -163,27 +142,27 @@ def train(num_epochs: int,
     train_dataloader = NodeDataLoader(g=graph,
                                       nids=train_nids,
                                       block_sampler=sampler,
-                                      batch_size=batch_size,
+                                      batch_size=1024,
                                       shuffle=True,
                                       drop_last=False,
                                       num_workers=1)
     val_dataloader = NodeDataLoader(g=graph,
                                     nids=val_nids,
                                     block_sampler=sampler,
-                                    batch_size=batch_size,
+                                    batch_size=1024,
                                     shuffle=False,
                                     drop_last=False,
                                     num_workers=1)
     test_dataloader = NodeDataLoader(g=graph,
                                      nids=test_nids,
                                      block_sampler=sampler,
-                                     batch_size=batch_size,
+                                     batch_size=1024,
                                      shuffle=False,
                                      drop_last=False,
                                      num_workers=1)
 
     # Set up pos_weight
-    pos_weight_tensor = torch.tensor(pos_weight).to(device)
+    pos_weight_tensor = torch.tensor(20.).to(device)
 
     # Set up path to state dict
     datetime = dt.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
@@ -194,12 +173,12 @@ def train(num_epochs: int,
     config_path = model_dir / 'config.json'
 
     # Initialise optimiser
-    opt = optim.AdamW(model.parameters(), lr=lr, betas=betas)
+    opt = optim.AdamW(model.parameters(), lr=3e-4, betas=(0.9, 0.999))
 
     # Initialise learning rate scheduler
     scheduler = LinearLR(optimizer=opt,
                          start_factor=1.,
-                         end_factor=1e-7 / lr,
+                         end_factor=1e-7 / 3e-4,
                          total_iters=100)
 
     # Initialise scorer
@@ -454,32 +433,3 @@ def train(num_epochs: int,
     for statistic, value in stats:
         log += f'> {statistic}: {value}\n'
     logger.info(log)
-
-
-if __name__ == '__main__':
-    config = dict(size='large',
-                  random_split=False,
-                  num_epochs=300,
-                  hidden_dim=1024,
-                  batch_size=1024,
-                  task='tweet',
-                  lr=3e-4,
-                  input_dropout=0.2,
-                  dropout=0.2,
-                  betas=(0.9, 0.999),
-                  pos_weight=20.)
-
-    for size in ['medium', 'large']:
-        config['size'] = size
-        for key, val in config.items():
-            print(f'{key}={val}')
-        train(**config)
-
-    for task in ['claim', 'tweet']:
-        for size in ['small', 'medium', 'large']:
-            config['random_split'] = True
-            config['task'] = task
-            config['size'] = size
-            for key, val in config.items():
-                print(f'{key}={val}')
-            train(**config)

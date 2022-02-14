@@ -15,10 +15,12 @@ from trainer_with_class_weights import TrainerWithClassWeights
 load_dotenv()
 
 
-def main(model_id: str,
-         size: str,
-         frozen: bool = False,
-         random_split: bool = False) -> Dict[str, float]:
+def train_tweet_model(model_id: str,
+                      size: str,
+                      frozen: bool = False,
+                      random_split: bool = False,
+                      num_epochs: int = 300,
+                      **_) -> Dict[str, float]:
     '''Train a transformer model on the dataset.
 
     Args:
@@ -30,6 +32,8 @@ def main(model_id: str,
             Whether to freeze the model weights. Defaults to False.
         random_split (bool, optional):
             Whether to use a random split of the dataset. Defaults to False.
+        num_epochs (int, optional):
+            The number of epochs to train for. Defaults to 300.
 
     Returns:
         dict:
@@ -119,7 +123,7 @@ def main(model_id: str,
         output_dir='models',
         per_device_train_batch_size=8,
         per_device_eval_batch_size=8,
-        num_train_epochs=100,
+        num_train_epochs=num_epochs,
         evaluation_strategy='steps',
         logging_strategy='steps',
         save_strategy='steps',
@@ -152,14 +156,3 @@ def main(model_id: str,
                    test=trainer.evaluate(test))
 
     return results
-
-
-if __name__ == '__main__':
-    labse_model = 'sentence-transformers/LaBSE'
-    model_id = sys.argv[-1] if len(sys.argv) > 1 else labse_model
-
-    size = 'medium'
-    results = main(model_id, size, random_split=True, frozen=False)
-    print(f'Results for {size}:')
-    print(results)
-    print()
