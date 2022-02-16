@@ -54,7 +54,7 @@ jupyterlab==3.2.4
 jupyterlab-pygments==0.1.2
 jupyterlab-server==2.8.2
 lazy-object-proxy==1.6.0
-lxml==4.6.3
+lxml==4.7.1
 MarkupSafe==2.0.1
 matplotlib-inline==0.1.3
 mccabe==0.6.1
