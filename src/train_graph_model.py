@@ -174,7 +174,9 @@ def train_graph_model(task: str,
                          total_iters=100)
 
     # Initialise scorer
-    scorer = tm.F1(num_classes=2, average='none').to(device)
+    scorer = tm.classification.f_beta.F1Score(num_classes=2,
+                                              average='none').to(device)
+
 
     # Initialise progress bar
     epoch_pbar = tqdm(range(num_epochs), desc='Training')
