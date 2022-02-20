@@ -136,7 +136,7 @@ def train_graph_model(task: str,
     train_dataloader = NodeDataLoader(g=graph,
                                       nids=train_nids,
                                       block_sampler=sampler,
-                                      batch_size=1024,
+                                      batch_size=32,
                                       shuffle=True,
                                       drop_last=False,
                                       num_workers=1)
