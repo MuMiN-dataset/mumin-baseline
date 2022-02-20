@@ -298,9 +298,11 @@ def train_graph_model(task: str,
         # Update progress bar description
         desc = (f'Training - '
                 f'loss {train_loss:.3f} - '
-                f'train_f1 {train_factual_f1:.3f} - '
+                f'factual_f1 {train_factual_f1:.3f} - '
+                f'misinfo_f1 {train_misinformation_f1:.3f} - '
                 f'val_loss {val_loss:.3f} - '
-                f'val_f1 {val_factual_f1:.3f}')
+                f'val_factual_f1 {val_factual_f1:.3f} - '
+                f'val_misinfo_f1 {val_misinformation_f1:.3f}')
         epoch_pbar.set_description(desc)
 
         # Update learning rate
