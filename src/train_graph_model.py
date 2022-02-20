@@ -17,6 +17,7 @@ import dgl
 import logging
 import datetime as dt
 from tqdm.auto import tqdm
+from mumin import load_dgl_graph, save_dgl_graph
 
 
 logger = logging.getLogger(__name__)
@@ -63,23 +64,17 @@ def train_graph_model(task: str,
     # Set up graph path
     graph_path = Path(f'dgl-graph-{size}.bin')
 
+    # Load the graph if it exists
     if graph_path.exists():
-        # Load the graph
-        graph = load_graphs(str(graph_path))[0][0]
+        graph = load_dgl_graph(graph_path)
 
+    # Otherwise, build the graph and save it
     else:
-        # Load dataset
+        # Build the graph
         graph = load_mumin_graph(size=size)
 
-        # Ensure that Boolean tensors are not present in the graph, as saving
-        # fails in that case
-        for ntype in ['claim', 'tweet']:
-            for split in ['train', 'val', 'test']:
-                split_tensor = graph.nodes[ntype].data[f'{split}_mask']
-                graph.nodes[ntype].data[f'{split}_mask'] = split_tensor.int()
-
-        # Save graph to disk
-        save_graphs(str(graph_path), [graph])
+        # Save the graph
+        save_dgl_graph(graph, graph_path)
 
     # Store labels and masks
     train_mask = graph.nodes[task].data['train_mask'].bool()
