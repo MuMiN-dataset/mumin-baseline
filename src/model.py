@@ -1,6 +1,7 @@
 '''Implementation of a heterogeneous GraphSAGE model'''
 
 from dgl.utils import expand_as_pair
+import dgl.nn.pytorch as dglnn
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,33 +24,26 @@ class HeteroGraphSAGE(nn.Module):
         self.task = task
 
         self.conv1 = HeteroGraphConv(
-            {rel: SAGEConv(in_feats=(feats[0], feats[1]),
-                           out_feats=hidden_dim,
-                           activation=F.gelu,
-                           input_dropout=input_dropout,
-                           dropout=dropout)
+            {rel: dglnn.SAGEConv(in_feats=(feats[0], feats[1]),
+                                 out_feats=hidden_dim,
+                                 aggregator_type='lstm',
+                                 feat_drop=input_dropout,
+                                 activation=nn.GELU())
              for rel, feats in feat_dict.items()},
             aggregate='sum')
 
         self.conv2 = HeteroGraphConv(
-            {rel: SAGEConv(in_feats=hidden_dim,
-                           out_feats=hidden_dim,
-                           activation=F.gelu,
-                           input_dropout=dropout,
-                           dropout=dropout)
+            {rel: dglnn.SAGEConv(in_feats=hidden_dim,
+                                 out_feats=hidden_dim,
+                                 aggregator_type='lstm',
+                                 feat_drop=input_dropout,
+                                 activation=nn.GELU())
              for rel, _ in feat_dict.items()},
             aggregate='sum')
 
-        # self.conv3 = HeteroGraphConv(
-        #     {rel: SAGEConv(in_feats=hidden_dim,
-        #                    out_feats=hidden_dim,
-        #                    activation=F.gelu,
-        #                    input_dropout=dropout,
-        #                    dropout=dropout)
-        #      for rel, _ in feat_dict.items()},
-        #     aggregate='sum')
-
         self.clf = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.BatchNorm1d(hidden_dim),
             nn.Linear(hidden_dim, hidden_dim),
             nn.GELU(),
             nn.Linear(hidden_dim, 1)
@@ -57,19 +51,11 @@ class HeteroGraphSAGE(nn.Module):
 
         self.norm = nn.LayerNorm(hidden_dim)
 
-    # def _agg_func(self, inputs, dsttype):
-    #     if len(inputs) == 0:
-    #         return None
-    #     stacked = torch.stack(inputs, dim=0)
-    #     return fn(stacked, dim=0)
-
     def forward(self, blocks, h_dict: dict) -> dict:
         h_dict = self.conv1(blocks[0], h_dict)
         h_dict = {k: self.norm(v) for k, v in h_dict.items()}
         h_dict = self.conv2(blocks[1], h_dict)
         h_dict = {k: self.norm(v) for k, v in h_dict.items()}
-        #h_dict = self.conv3(blocks[2], h_dict)
-        #h_dict = {k: self.norm(v) for k, v in h_dict.items()}
         return self.clf(h_dict[self.task])
 
 
@@ -88,9 +74,6 @@ class SAGEConv(nn.Module):
         self.input_dropout = nn.Dropout(input_dropout)
         self.dropout = nn.Dropout(dropout)
         self.activation = (lambda x: x) if activation is None else activation
-        # self.norm_concat = ((lambda x: x)
-        #                     if activation is None
-        #                     else nn.LayerNorm(out_feats))
 
     def _message(self, edges):
         src_feats = edges.src['h']
@@ -109,7 +92,6 @@ class SAGEConv(nn.Module):
         h = self.dropout(h)
         h = self.fc(h)
         h = self.activation(h)
-        # h = self.norm_concat(h)
         return {'h':  h}
 
     def forward(self, graph, feat):

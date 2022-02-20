@@ -10,7 +10,6 @@ import torch.optim as optim
 import torch.utils.data as D
 from torch.optim.lr_scheduler import LinearLR
 import torchmetrics as tm
-from dgl.data.utils import save_graphs, load_graphs
 from dgl.dataloading.neighbor import MultiLayerNeighborSampler
 from dgl.dataloading.pytorch import NodeDataLoader
 import dgl
@@ -164,8 +163,6 @@ def train_graph_model(task: str,
     Path('models').mkdir(exist_ok=True)
     model_dir = Path('models') / f'{datetime}-{task}-model-{size}'
     model_dir.mkdir(exist_ok=True)
-    model_path = model_dir / 'model.pt'
-    config_path = model_dir / 'config.json'
 
     # Initialise optimiser
     opt = optim.AdamW(model.parameters(), lr=3e-4, betas=(0.9, 0.999))
@@ -178,9 +175,6 @@ def train_graph_model(task: str,
 
     # Initialise scorer
     scorer = tm.F1(num_classes=2, average='none').to(device)
-
-    # Initialise best score
-    best_factual_f1 = 0.0
 
     # Initialise progress bar
     epoch_pbar = tqdm(range(num_epochs), desc='Training')
@@ -197,9 +191,7 @@ def train_graph_model(task: str,
 
         # Train model
         model.train()
-        for _, _, blocks in tqdm(train_dataloader,
-                                 desc=f'Epoch {epoch}',
-                                 leave=False):
+        for _, _, blocks in train_dataloader:
 
             # Reset the gradients
             opt.zero_grad()
@@ -297,12 +289,9 @@ def train_graph_model(task: str,
         ]
 
         # Report and log statistics
-        #log = f'Epoch {epoch}\n'
         config['epoch'] = epoch
         for statistic, value in stats:
-            #log += f'> {statistic}: {value}\n'
             config[statistic] = value
-        #logger.info(log)
 
         # Update progress bar description
         desc = (f'Training - '
@@ -311,13 +300,6 @@ def train_graph_model(task: str,
                 f'val_loss {val_loss:.3f} - '
                 f'val_f1 {val_factual_f1:.3f}')
         epoch_pbar.set_description(desc)
-
-        # Save model and config
-        # if val_factual_f1 > best_factual_f1:
-        #     best_factual_f1 = val_factual_f1
-        #     torch.save(model.state_dict(), str(model_path))
-        #     with config_path.open('w') as f:
-        #         json.dump(config, f)
 
         # Update learning rate
         scheduler.step()
