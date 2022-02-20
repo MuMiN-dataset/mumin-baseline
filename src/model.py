@@ -36,7 +36,7 @@ class HeteroGraphSAGE(nn.Module):
             {rel: dglnn.SAGEConv(in_feats=hidden_dim,
                                  out_feats=hidden_dim,
                                  aggregator_type='lstm',
-                                 feat_drop=input_dropout,
+                                 feat_drop=dropout,
                                  activation=nn.GELU())
              for rel, _ in feat_dict.items()},
             aggregate='sum')
