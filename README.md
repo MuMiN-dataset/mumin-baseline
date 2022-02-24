@@ -25,6 +25,9 @@ The random and majority baselines are calculated based on the proportion of
 `random_majority_macro_f1.ipynb` notebook for details.
 
 ## Related Repositories
+- [MuMiN website](https://mumin-dataset.github.io/), the central place for the
+  MuMiN ecosystem, containing tutorials, leaderboards and links to the paper
+  and related repositories.
 - [MuMiN](https://github.com/MuMiN-dataset/mumin), containing the
   paper in PDF and LaTeX form.
 - [MuMiN-build](https://github.com/MuMiN-dataset/mumin-build),
