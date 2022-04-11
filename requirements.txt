@@ -71,7 +71,7 @@ nest-asyncio==1.5.1
 networkx==2.6.3
 newspaper3k==0.2.8
 nltk==3.7
-notebook==6.4.10
+notebook==6.4.6
 numexpr==2.7.3
 numpy==1.21.2
 opencv-python==4.5.3.56
@@ -93,6 +93,7 @@ py==1.10.0
 pyarrow==5.0.0
 pycodestyle==2.8.0
 pycparser==2.21
+pyDeprecate==0.3.2
 pyflakes==2.4.0
 Pygments==2.10.0
 pylint==2.11.1
@@ -127,7 +128,7 @@ tokenizers==0.10.3
 toml==0.10.2
 tomli==2.0.1
 torch==1.10.0
-torchmetrics==0.5.1
+torchmetrics==0.7.3
 tornado==6.1
 tqdm==4.62.3
 traitlets==5.1.1
