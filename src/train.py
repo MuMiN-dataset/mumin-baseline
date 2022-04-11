@@ -73,10 +73,8 @@ def main(model_type: str, **kwargs):
     log = 'Final evaluation\n'
     for split, dct in scores.items():
         for statistic, value in dct.items():
-            if split in statistic:
-                log += f'> {statistic}: {value}\n'
-            else:
-                log += f'> {split}_{statistic}: {value}\n'
+            statistic = split + '_' + statistic.replace('eval_', '')
+            log += f'> {statistic}: {value}\n'
     logger.info(log)
 
 
