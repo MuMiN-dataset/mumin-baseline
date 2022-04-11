@@ -5,6 +5,13 @@ from train_claim_model import train_claim_model
 from train_tweet_model import train_tweet_model
 from train_image_model import train_image_model
 from train_graph_model import train_graph_model
+import logging
+
+
+# Set up logging
+fmt = '%(asctime)s [%(levelname)s] %(message)s'
+logging.basicConfig(level=logging.INFO, format=fmt)
+logger = logging.getLogger(__name__)
 
 
 @click.command()
@@ -50,17 +57,27 @@ def main(model_type: str, **kwargs):
     '''Benchmark models on the MuMiN dataset.'''
     if model_type == 'claim':
         kwargs['model_id'] = kwargs.pop('text_model_id')
-        train_claim_model(**kwargs)
+        scores = train_claim_model(**kwargs)
     elif model_type == 'tweet':
         kwargs['model_id'] = kwargs.pop('text_model_id')
-        train_tweet_model(**kwargs)
+        scores = train_tweet_model(**kwargs)
     elif model_type == 'image':
         kwargs['model_id'] = kwargs.pop('image_model_id')
-        train_image_model(**kwargs)
+        scores = train_image_model(**kwargs)
     elif model_type == 'graph':
-        train_graph_model(**kwargs)
+        scores = train_graph_model(**kwargs)
     else:
         raise ValueError(f'Invalid model type: {model_type}')
+
+    # Report statistics
+    log = 'Final evaluation\n'
+    for split, dct in scores.items():
+        for statistic, value in dct.items():
+            if split in statistic:
+                log += f'> {statistic}: {value}\n'
+            else:
+                log += f'> {split}_{statistic}: {value}\n'
+    logger.info(log)
 
 
 if __name__ == '__main__':

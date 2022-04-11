@@ -4,7 +4,6 @@ from transformers import (AutoTokenizer, AutoModelForSequenceClassification,
                           AutoConfig, TrainingArguments)
 from datasets import Dataset, load_metric
 from typing import Dict
-import sys
 import os
 from dotenv import load_dotenv
 from mumin import MuminDataset
@@ -20,7 +19,7 @@ def train_tweet_model(model_id: str,
                       frozen: bool = False,
                       random_split: bool = False,
                       num_epochs: int = 300,
-                      **_) -> Dict[str, float]:
+                      **_) -> Dict[str, Dict[str, float]]:
     '''Train a transformer model on the dataset.
 
     Args:
@@ -37,8 +36,8 @@ def train_tweet_model(model_id: str,
 
     Returns:
         dict:
-            The results of the training, with keys the names of the metrics and
-            values the scores.
+            The results of the training, with keys 'train', 'val' and 'split',
+            with dictionaries with the split scores as values.
     '''
     # Load the dataset
     mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'], size=size)

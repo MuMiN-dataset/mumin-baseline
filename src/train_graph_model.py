@@ -17,6 +17,7 @@ import logging
 import datetime as dt
 from tqdm.auto import tqdm
 from mumin import load_dgl_graph, save_dgl_graph
+from typing import Dict
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,7 @@ def train_graph_model(task: str,
                       size: str,
                       num_epochs: int = 300,
                       random_split: bool = False,
-                      **_):
+                      **_) -> Dict[str, Dict[str, float]]:
     '''Train a heterogeneous GraphConv model on the MuMiN dataset.
 
     Args:
@@ -42,6 +43,10 @@ def train_graph_model(task: str,
             Whether a random train/val/test split of the data should be
             performed (with a fixed random seed). If not then the claim cluster
             splits will be used. Defaults to False.
+
+        dict:
+            The results of the training, with keys 'train', 'val' and 'split',
+            with dictionaries with the split scores as values.
     '''
     # Set random seeds
     torch.manual_seed(4242)
@@ -191,6 +196,9 @@ def train_graph_model(task: str,
         val_misinformation_f1 = 0.0
         val_factual_f1 = 0.0
 
+        # Reset metrics
+        scorer.reset()
+
         # Train model
         model.train()
         for _, _, blocks in train_dataloader:
@@ -217,9 +225,7 @@ def train_graph_model(task: str,
             )
 
             # Compute training metrics
-            scores = scorer(logits.ge(0), output_labels)
-            misinformation_f1 = scores[0]
-            factual_f1 = scores[1]
+            scorer(logits.ge(0), output_labels)
 
             # Backward propagation
             loss.backward()
@@ -227,17 +233,19 @@ def train_graph_model(task: str,
             # Update gradients
             opt.step()
 
-            # Store the training metrics
+            # Store the training loss
             train_loss += float(loss)
-            if misinformation_f1 == misinformation_f1:
-                train_misinformation_f1 += float(misinformation_f1)
-            if factual_f1 == factual_f1:
-                train_factual_f1 += float(factual_f1)
 
-        # Divide the training metrics by the number of batches
+        # Divide the training loss by the number of batches
         train_loss /= len(train_dataloader)
-        train_misinformation_f1 /= len(train_dataloader)
-        train_factual_f1 /= len(train_dataloader)
+
+        # Compute the training metrics
+        train_f1s = scorer.compute()
+        train_misinformation_f1 = train_f1s[0].item()
+        train_factual_f1 = train_f1s[1].item()
+
+        # Reset the metrics
+        scorer.reset()
 
         # Evaluate model
         model.eval()
@@ -263,21 +271,18 @@ def train_graph_model(task: str,
                 )
 
                 # Compute validation metrics
-                scores = scorer(logits.ge(0), output_labels)
-                misinformation_f1 = scores[0]
-                factual_f1 = scores[1]
+                scorer(logits.ge(0), output_labels)
 
-                # Store the validation metrics
+                # Store the validation loss
                 val_loss += float(loss)
-                if misinformation_f1 == misinformation_f1:
-                    val_misinformation_f1 += float(misinformation_f1)
-                if factual_f1 == factual_f1:
-                    val_factual_f1 += float(factual_f1)
 
-        # Divide the validation metrics by the number of batches
+        # Divide the validation loss by the number of batches
         val_loss /= len(val_dataloader)
-        val_misinformation_f1 /= len(val_dataloader)
-        val_factual_f1 /= len(val_dataloader)
+
+        # Compute the validation metrics
+        val_f1s = scorer.compute()
+        val_misinformation_f1 = val_f1s[0].item()
+        val_factual_f1 = val_f1s[1].item()
 
         # Gather statistics to be logged
         stats = [
@@ -311,13 +316,12 @@ def train_graph_model(task: str,
     # Close progress bar
     epoch_pbar.close()
 
-    # Reset metrics
+    # Reset loss
     val_loss = 0.0
-    val_misinformation_f1 = 0.0
-    val_factual_f1 = 0.0
     test_loss = 0.0
-    test_misinformation_f1 = 0.0
-    test_factual_f1 = 0.0
+
+    # Reset metrics
+    scorer.reset()
 
     # Final evaluation on the validation set
     model.eval()
@@ -343,21 +347,21 @@ def train_graph_model(task: str,
             )
 
             # Compute validation metrics
-            scores = scorer(logits.ge(0), output_labels)
-            misinformation_f1 = scores[0]
-            factual_f1 = scores[1]
+            scorer(logits.ge(0), output_labels)
 
-            # Store the validation metrics
+            # Store the validation loss
             val_loss += float(loss)
-            if misinformation_f1 == misinformation_f1:
-                val_misinformation_f1 += float(misinformation_f1)
-            if factual_f1 == factual_f1:
-                val_factual_f1 += float(factual_f1)
 
-    # Divide the validation metrics by the number of batches
+    # Divide the validation loss by the number of batches
     val_loss /= len(val_dataloader)
-    val_misinformation_f1 /= len(val_dataloader)
-    val_factual_f1 /= len(val_dataloader)
+
+    # Compute the validation metrics
+    val_f1s = scorer.compute()
+    val_misinformation_f1 = val_f1s[0].item()
+    val_factual_f1 = val_f1s[1].item()
+
+    # Reset the metrics
+    scorer.reset()
 
     # Final evaluation on the test set
     model.eval()
@@ -375,42 +379,44 @@ def train_graph_model(task: str,
             # Forward propagation
             logits = model(blocks, input_feats).squeeze()
 
-            # Compute validation loss
+            # Compute test loss
             loss = F.binary_cross_entropy_with_logits(
                 input=logits,
                 target=output_labels.float(),
                 pos_weight=pos_weight_tensor
             )
 
-            # Compute validation metrics
-            scores = scorer(logits.ge(0), output_labels)
-            misinformation_f1 = scores[0]
-            factual_f1 = scores[1]
+            # Compute test metrics
+            scorer(logits.ge(0), output_labels)
 
-            # Store the test metrics
+            # Store the test loss
             test_loss += float(loss)
-            if misinformation_f1 == misinformation_f1:
-                test_misinformation_f1 += float(misinformation_f1)
-            if factual_f1 == factual_f1:
-                test_factual_f1 += float(factual_f1)
 
-    # Divide the validation metrics by the number of batches
+    # Divide the test loss by the number of batches
     test_loss /= len(test_dataloader)
-    test_misinformation_f1 /= len(test_dataloader)
-    test_factual_f1 /= len(test_dataloader)
+
+    # Compute the test metrics
+    test_f1s = scorer.compute()
+    test_misinformation_f1 = test_f1s[0].item()
+    test_factual_f1 = test_f1s[1].item()
 
     # Gather statistics to be logged
-    stats = [
-        ('val_loss', val_loss),
-        ('val_misinformation_f1', val_misinformation_f1),
-        ('val_factual_f1', val_factual_f1),
-        ('test_loss', test_loss),
-        ('test_misinformation_f1', test_misinformation_f1),
-        ('test_factual_f1', test_factual_f1),
-    ]
+    results = {
+        'train': {
+            'loss': train_loss,
+            'factual_f1': train_factual_f1,
+            'misinformation_f1': train_misinformation_f1
+        },
+        'val': {
+            'loss': val_loss,
+            'factual_f1': val_factual_f1,
+            'misinformation_f1': val_misinformation_f1
+        },
+        'test': {
+            'loss': test_loss,
+            'factual_f1': test_factual_f1,
+            'misinformation_f1': test_misinformation_f1
+        }
+    }
 
-    # Report statistics
-    log = 'Final evaluation\n'
-    for statistic, value in stats:
-        log += f'> {statistic}: {value}\n'
-    logger.info(log)
+    return results

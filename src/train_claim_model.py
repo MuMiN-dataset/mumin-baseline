@@ -4,7 +4,6 @@ from transformers import (AutoTokenizer, AutoModelForSequenceClassification,
                           AutoConfig, TrainingArguments)
 from datasets import Dataset, load_metric
 from typing import Dict
-import sys
 import pandas as pd
 from dotenv import load_dotenv
 
@@ -19,7 +18,7 @@ def train_claim_model(model_id: str,
                       frozen: bool = False,
                       random_split: bool = False,
                       num_epochs: int = 300,
-                      **_) -> Dict[str, float]:
+                      **_) -> Dict[str, Dict[str, float]]:
     '''Train a transformer model on the dataset.
 
     Args:
@@ -36,8 +35,8 @@ def train_claim_model(model_id: str,
 
     Returns:
         dict:
-            The results of the training, with keys the names of the metrics and
-            values the scores.
+            The results of the training, with keys 'train', 'val' and 'split',
+            with dictionaries with the split scores as values.
     '''
     # Load the dataset
     claim_df = pd.read_pickle(f'claim_dump_{size}.pkl.xz')

@@ -2,9 +2,8 @@
 
 from transformers import (AutoModelForImageClassification,
                           AutoFeatureExtractor, AutoConfig, TrainingArguments)
-from datasets import Dataset, load_metric, set_caching_enabled
+from datasets import Dataset, load_metric
 from typing import Dict
-import sys
 import numpy as np
 from mumin import MuminDataset
 import os
@@ -21,7 +20,7 @@ def train_image_model(model_id: str,
                       size: str,
                       random_split: bool = False,
                       num_epochs: int = 300,
-                      **_) -> Dict[str, float]:
+                      **_) -> Dict[str, Dict[str, float]]:
     '''Train a vision transformer model on the dataset.
 
     Args:
@@ -36,8 +35,8 @@ def train_image_model(model_id: str,
 
     Returns:
         dict:
-            The results of the training, with keys the names of the metrics and
-            values the scores.
+            The results of the training, with keys 'train', 'val' and 'split',
+            with dictionaries with the split scores as values.
     '''
     # Load the dataset
     mumin_dataset = MuminDataset(os.environ['TWITTER_API_KEY'], size=size)
