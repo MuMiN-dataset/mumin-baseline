@@ -78,8 +78,8 @@ def train_tweet_model(model_id: str,
     config_dict = dict(num_labels=2,
                        id2label={0: 'misinformation', 1: 'factual'},
                        label2id=dict(misinformation=0, factual=1),
-                       hidden_dropout_prob=0.5,
-                       attention_probs_dropout_prob=0.5,
+                       hidden_dropout_prob=0.2,
+                       attention_probs_dropout_prob=0.2,
                        classifier_dropout_prob=0.5)
     config = AutoConfig.from_pretrained(model_id, **config_dict)
     model = AutoModelForSequenceClassification.from_pretrained(model_id,
@@ -132,7 +132,7 @@ def train_tweet_model(model_id: str,
         report_to='none',
         save_total_limit=1,
         learning_rate=2e-5,
-        warmup_ratio=0.01,  # 10 epochs
+        warmup_ratio=0.01,
         gradient_accumulation_steps=4,
         metric_for_best_model='factual_f1',
     )
