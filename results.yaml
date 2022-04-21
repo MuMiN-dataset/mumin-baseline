@@ -164,15 +164,15 @@
   frozen: false
   split: random
   model_id: sentence-transformers/LaBSE
-  train_loss: 0.152
-  train_factual_f1: 0.857
-  train_misinfo_f1: 0.987
-  val_loss: 0.930
-  val_factual_f1: 0.395
-  val_misinfo_f1: 0.944
-  test_loss: 0.689
-  test_factual_f1: 0.481
-  test_misinfo_f1: 0.941
+  train_loss: 0.027
+  train_factual_f1: 0.983
+  train_misinfo_f1: 0.999
+  val_loss: 1.468
+  val_factual_f1: 0.476
+  val_misinfo_f1: 0.965
+  test_loss: 1.000
+  test_factual_f1: 0.567
+  test_misinfo_f1: 0.970
 
 - size: medium
   type: text
@@ -196,15 +196,15 @@
   frozen: false
   split: random
   model_id: sentence-transformers/LaBSE
-  train_loss: 0.103
-  train_factual_f1: 0.849
-  train_misinfo_f1: 0.990
-  val_loss: 1.225
-  val_factual_f1: 0.539
-  val_misinfo_f1: 0.962
-  test_loss: 0.805
-  test_factual_f1: 0.505
-  test_misinfo_f1: 0.967
+  train_loss: 0.021
+  train_factual_f1: 0.979
+  train_misinfo_f1: 0.999
+  val_loss: 1.627
+  val_factual_f1: 0.671
+  val_misinfo_f1: 0.981
+  test_loss: 0.895
+  test_factual_f1: 0.650
+  test_misinfo_f1: 0.985
 
 - size: large
   type: text
