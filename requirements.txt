@@ -71,7 +71,7 @@ nest-asyncio==1.5.1
 networkx==2.6.3
 newspaper3k==0.2.8
 nltk==3.7
-notebook==6.4.6
+notebook==6.4.12
 numexpr==2.7.3
 numpy==1.22.0
 opencv-python==4.5.3.56
