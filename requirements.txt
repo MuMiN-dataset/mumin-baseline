@@ -73,7 +73,7 @@ newspaper3k==0.2.8
 nltk==3.7
 notebook==6.4.6
 numexpr==2.7.3
-numpy==1.21.2
+numpy==1.22.0
 opencv-python==4.5.3.56
 packaging==21.0
 pandas==1.3.4
