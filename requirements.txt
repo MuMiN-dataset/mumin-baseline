@@ -58,7 +58,7 @@ lxml==4.9.1
 MarkupSafe==2.0.1
 matplotlib-inline==0.1.3
 mccabe==0.6.1
-mistune==0.8.4
+mistune==2.0.3
 multidict==5.2.0
 multiprocess==0.70.12.2
 mumin==1.5.0
