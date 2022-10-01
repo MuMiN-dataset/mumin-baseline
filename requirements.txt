@@ -44,7 +44,7 @@ isort==5.9.3
 jedi==0.18.0
 jieba3k==0.35.1
 Jinja2==3.0.3
-joblib==1.1.0
+joblib==1.2.0
 json5==0.9.6
 jsonschema==4.2.1
 jupyter-client==7.1.0
