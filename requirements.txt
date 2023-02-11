@@ -38,7 +38,7 @@ idna==3.3
 importlib-resources==5.4.0
 iniconfig==1.1.1
 ipykernel==6.5.1
-ipython==8.0.1
+ipython==8.10.0
 ipython-genutils==0.2.0
 isort==5.9.3
 jedi==0.18.0
