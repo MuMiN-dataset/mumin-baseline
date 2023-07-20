@@ -95,7 +95,7 @@ pycodestyle==2.8.0
 pycparser==2.21
 pyDeprecate==0.3.2
 pyflakes==2.4.0
-Pygments==2.10.0
+Pygments==2.15.0
 pylint==2.11.1
 pyparsing==2.4.7
 pyrsistent==0.18.0
